@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { addStatusEntry, createApplication } from '../src/history';
 import { buildSankey, forwardPath } from '../src/sankey';
-import type { Application, Status } from '../src/schemas';
+import type { Status } from '../src/enums';
+import type { Application } from '../src/schemas';
 import { NOW, ids } from './helpers';
 
 const gen = ids(2000);

@@ -1,5 +1,5 @@
-import { PROGRESS_STAGES, TERMINAL_EXIT_STATUSES } from './enums';
-import type { Application, Status } from './schemas';
+import { PROGRESS_STAGES, TERMINAL_EXIT_STATUSES, type Status } from './enums';
+import type { Application } from './schemas';
 
 export type SankeyNodeName = Status | 'no_response';
 export type SankeyData = {
