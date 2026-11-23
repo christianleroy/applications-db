@@ -26,3 +26,7 @@ Personal job-application tracker: an npm-workspaces monorepo with a React web ap
 - TypeScript `strict`; no `any` in exported signatures.
 - TDD: write the failing test first, watch it fail, then implement.
 - Use the superpowers workflow (brainstorm, plan, execute) for new features.
+
+## Approval rules (from the owner; apply to Claude and every subagent)
+- Never `git push` (any branch, force-push, tags) without the owner's explicit approval of that push. When committed work is ready, summarize what changed and ask.
+- Never change anything outside this repo folder without approval: no global installs, browser downloads (e.g. `npx playwright install`), Docker image pulls/builds/containers, or edits to user/host config. List exactly what would change on the host, then ask.
