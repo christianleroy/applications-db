@@ -6,3 +6,4 @@ export * from './history';
 export * from './definitions';
 export * from './query';
 export * from './sankey';
+export * from './stats';
