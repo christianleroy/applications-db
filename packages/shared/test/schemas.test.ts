@@ -46,4 +46,10 @@ describe('schemas', () => {
     const kept = UpdateApplicationInputSchema.parse({ contacts: [{ name: 'Pat' }] });
     expect(kept.contacts).toEqual([{ name: 'Pat' }]);
   });
+  it('update accepts null to clear optional fields but not required ones', () => {
+    expect(UpdateApplicationInputSchema.parse({ notes: null })).toEqual({ notes: null });
+    expect(UpdateApplicationInputSchema.parse({ salary: null, workMode: null })).toEqual({ salary: null, workMode: null });
+    expect(UpdateApplicationInputSchema.safeParse({ company: null }).success).toBe(false);
+    expect(UpdateApplicationInputSchema.safeParse({ source: null }).success).toBe(false);
+  });
 });

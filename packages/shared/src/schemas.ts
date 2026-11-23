@@ -75,7 +75,18 @@ export const CreateApplicationInputSchema = z.object({
 });
 export type CreateApplicationInput = z.infer<typeof CreateApplicationInputSchema>;
 
-export const UpdateApplicationInputSchema = z.object(editableFields).partial();
+/** In a patch, `null` clears an optional field; an absent key leaves it unchanged. */
+export const UpdateApplicationInputSchema = z
+  .object({
+    ...editableFields,
+    postingUrl: editableFields.postingUrl.nullable(),
+    location: editableFields.location.nullable(),
+    workMode: editableFields.workMode.nullable(),
+    salary: editableFields.salary.nullable(),
+    followUpDate: editableFields.followUpDate.nullable(),
+    notes: editableFields.notes.nullable(),
+  })
+  .partial();
 export type UpdateApplicationInput = z.infer<typeof UpdateApplicationInputSchema>;
 
 export const StatusEntryInputSchema = z.object({

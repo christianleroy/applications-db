@@ -93,4 +93,11 @@ describe('history operations', () => {
     updateStatusEntry(base, 'id-1', { date: '2026-10-29' }, NOW);
     expect(base).toEqual(snapshot);
   });
+
+  it('removes optional fields whose patch value is null', () => {
+    const withNotes = updateApplication(base, { notes: 'hello', location: 'Paris' }, NOW);
+    const a = updateApplication(withNotes, { notes: null }, LATER);
+    expect('notes' in a).toBe(false);
+    expect(a.location).toBe('Paris');
+  });
 });

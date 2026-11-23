@@ -51,7 +51,9 @@ export function updateApplication(app: Application, patch: UpdateApplicationInpu
   const { dateApplied, ...rest } = patch;
   const history = app.statusHistory.map((e) => ({ ...e }));
   if (dateApplied !== undefined) history[0] = { ...history[0]!, date: dateApplied };
-  return finalize({ ...app, ...rest }, history, now);
+  const merged: Record<string, unknown> = { ...app, ...rest };
+  for (const [key, value] of Object.entries(rest)) if (value === null) delete merged[key];
+  return finalize(merged as Application, history, now);
 }
 
 export function addStatusEntry(app: Application, input: StatusEntryInput, newId: IdGen, now: string): Application {
