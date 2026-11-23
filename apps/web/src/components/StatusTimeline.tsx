@@ -61,9 +61,9 @@ function EntryFields({ uid, status, date, note, onStatus, onDate, onNote }: Fiel
   );
 }
 
-type EntryProps = { applicationId: string; entry: StatusEntry; deletable: boolean };
+type EntryProps = { applicationId: string; entry: StatusEntry; deletable: boolean; onChanged?: () => void };
 
-function TimelineEntry({ applicationId, entry, deletable }: EntryProps) {
+function TimelineEntry({ applicationId, entry, deletable, onChanged }: EntryProps) {
   const uid = useId();
   const update = useUpdateStatus();
   const remove = useRemoveStatus();
@@ -78,6 +78,7 @@ function TimelineEntry({ applicationId, entry, deletable }: EntryProps) {
     setError(null);
     try {
       await update.mutateAsync({ id: applicationId, entryId: entry.id, patch: { status, date, note: note.trim() } });
+      onChanged?.();
       setEditing(false);
     } catch (err) {
       setError(errorMessage(err));
@@ -88,6 +89,7 @@ function TimelineEntry({ applicationId, entry, deletable }: EntryProps) {
     setError(null);
     try {
       await remove.mutateAsync({ id: applicationId, entryId: entry.id });
+      onChanged?.();
     } catch (err) {
       setError(errorMessage(err));
     }
@@ -151,7 +153,7 @@ function TimelineEntry({ applicationId, entry, deletable }: EntryProps) {
   );
 }
 
-function AddStatusForm({ application }: { application: Application }) {
+function AddStatusForm({ application, onChanged }: { application: Application; onChanged?: () => void }) {
   const uid = useId();
   const add = useAddStatus();
   const [status, setStatus] = useState<Status>(() => nextStage(application.status));
@@ -168,6 +170,7 @@ function AddStatusForm({ application }: { application: Application }) {
         id: application.id,
         input: { status, date, ...(trimmed && { note: trimmed }) },
       });
+      onChanged?.();
       setNote('');
       setStatus(nextStage(updated.status));
     } catch (err) {
@@ -192,16 +195,16 @@ function AddStatusForm({ application }: { application: Application }) {
   );
 }
 
-export function StatusTimeline({ application }: { application: Application }) {
+export function StatusTimeline({ application, onChanged }: { application: Application; onChanged?: () => void }) {
   return (
     <section aria-label="Status timeline" className="space-y-3">
       <h2 className="text-lg font-semibold">Timeline</h2>
       <ol className="space-y-2">
         {application.statusHistory.map((entry, i) => (
-          <TimelineEntry key={entry.id} applicationId={application.id} entry={entry} deletable={i > 0} />
+          <TimelineEntry key={entry.id} applicationId={application.id} entry={entry} deletable={i > 0} onChanged={onChanged} />
         ))}
       </ol>
-      <AddStatusForm application={application} />
+      <AddStatusForm application={application} onChanged={onChanged} />
     </section>
   );
 }

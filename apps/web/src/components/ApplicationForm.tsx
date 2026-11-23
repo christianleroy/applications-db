@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent } from 'react';
+import { useId, useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
 import {
   SALARY_PERIODS,
   SOURCES,
@@ -16,7 +16,7 @@ import { useUpdateApplication } from '../data/hooks';
 import { SOURCE_LABELS, WORK_MODE_LABELS } from '../lib/labels';
 import { Field, errorProps, inputClass } from './Field';
 
-type Props = { initial: Application; onSaved: (app: Application) => void };
+type Props = { initial: Application; onSaved: (app: Application) => void; onEdit?: () => void };
 
 type ContactDraft = { name: string; role: string; email: string; phone: string; notes: string };
 
@@ -55,23 +55,44 @@ function issueKey(path: PropertyKey[]): string {
   return path.map(String).join('.');
 }
 
-export function ApplicationForm({ initial, onSaved }: Props) {
+/**
+ * A field draft that follows `source` until the user edits it. Once touched it keeps the user's
+ * input when `source` changes, and resumes following once `source` catches up (e.g. after a save).
+ */
+function useDraft<T>(source: T, onEdit?: () => void): [T, Dispatch<SetStateAction<T>>] {
+  const [state, setState] = useState({ value: source, touched: false });
+  const key = JSON.stringify(source);
+  const [prevKey, setPrevKey] = useState(key);
+  if (key !== prevKey) {
+    setPrevKey(key);
+    if (!state.touched || JSON.stringify(state.value) === key) setState({ value: source, touched: false });
+  }
+  return [
+    state.value,
+    (next) => {
+      setState((s) => ({ value: typeof next === 'function' ? (next as (prev: T) => T)(s.value) : next, touched: true }));
+      onEdit?.();
+    },
+  ];
+}
+
+export function ApplicationForm({ initial, onSaved, onEdit }: Props) {
   const uid = useId();
   const update = useUpdateApplication();
-  const [company, setCompany] = useState(initial.company);
-  const [role, setRole] = useState(initial.role);
-  const [postingUrl, setPostingUrl] = useState(initial.postingUrl ?? '');
-  const [location, setLocation] = useState(initial.location ?? '');
-  const [workMode, setWorkMode] = useState<WorkMode | ''>(initial.workMode ?? '');
-  const [salaryMin, setSalaryMin] = useState(initial.salary?.min?.toString() ?? '');
-  const [salaryMax, setSalaryMax] = useState(initial.salary?.max?.toString() ?? '');
-  const [currency, setCurrency] = useState(initial.salary?.currency ?? 'USD');
-  const [period, setPeriod] = useState<SalaryPeriod>(initial.salary?.period ?? 'year');
-  const [source, setSource] = useState<Source>(initial.source);
-  const [dateApplied, setDateApplied] = useState(initial.dateApplied);
-  const [followUpDate, setFollowUpDate] = useState(initial.followUpDate ?? '');
-  const [contacts, setContacts] = useState<ContactDraft[]>(initial.contacts.map(toDraft));
-  const [notes, setNotes] = useState(initial.notes ?? '');
+  const [company, setCompany] = useDraft(initial.company, onEdit);
+  const [role, setRole] = useDraft(initial.role, onEdit);
+  const [postingUrl, setPostingUrl] = useDraft(initial.postingUrl ?? '', onEdit);
+  const [location, setLocation] = useDraft(initial.location ?? '', onEdit);
+  const [workMode, setWorkMode] = useDraft<WorkMode | ''>(initial.workMode ?? '', onEdit);
+  const [salaryMin, setSalaryMin] = useDraft(initial.salary?.min?.toString() ?? '', onEdit);
+  const [salaryMax, setSalaryMax] = useDraft(initial.salary?.max?.toString() ?? '', onEdit);
+  const [currency, setCurrency] = useDraft(initial.salary?.currency ?? 'USD', onEdit);
+  const [period, setPeriod] = useDraft<SalaryPeriod>(initial.salary?.period ?? 'year', onEdit);
+  const [source, setSource] = useDraft(initial.source, onEdit);
+  const [dateApplied, setDateApplied] = useDraft(initial.dateApplied, onEdit);
+  const [followUpDate, setFollowUpDate] = useDraft(initial.followUpDate ?? '', onEdit);
+  const [contacts, setContacts] = useDraft<ContactDraft[]>(initial.contacts.map(toDraft), onEdit);
+  const [notes, setNotes] = useDraft(initial.notes ?? '', onEdit);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
 

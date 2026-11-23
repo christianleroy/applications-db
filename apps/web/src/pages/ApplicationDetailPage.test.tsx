@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { createApplication, type Application } from '@applications-db/shared';
@@ -84,5 +84,40 @@ describe('ApplicationDetailPage', () => {
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('dialog')).toBeNull();
     await expect(client.get(app.id)).resolves.toMatchObject({ id: app.id });
+  });
+
+  it('keeps unsaved form edits when the timeline changes', async () => {
+    const user = userEvent.setup();
+    setup(make());
+    const notes = await screen.findByLabelText('Notes');
+    await user.type(notes, 'draft notes');
+    await user.click(screen.getByRole('button', { name: 'Add status' }));
+    await waitFor(() => expect(screen.getAllByRole('listitem')).toHaveLength(2));
+    expect(screen.getByLabelText('Notes')).toHaveValue('draft notes');
+  });
+
+  it('resyncs an untouched date applied when the first entry date is edited', async () => {
+    const user = userEvent.setup();
+    setup(make());
+    await screen.findByLabelText('Company');
+    const first = screen.getAllByRole('listitem')[0]!;
+    await user.click(within(first).getByRole('button', { name: /edit/i }));
+    fireEvent.change(within(first).getByLabelText('Date'), { target: { value: '2026-10-12' } });
+    await user.click(within(first).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(screen.getByLabelText('Date applied')).toHaveValue('2026-10-12'));
+  });
+
+  it('clears the Saved banner on the next form edit and on a timeline change', async () => {
+    const user = userEvent.setup();
+    setup(make());
+    await user.type(await screen.findByLabelText('Notes'), 'x');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(await screen.findByText('Saved')).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Notes'), 'y');
+    expect(screen.queryByText('Saved')).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(await screen.findByText('Saved')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Add status' }));
+    await waitFor(() => expect(screen.queryByText('Saved')).toBeNull());
   });
 });

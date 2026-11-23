@@ -107,10 +107,10 @@ export function ApplicationDetailPage() {
             Saved
           </p>
         )}
-        <ApplicationForm key={app.updatedAt} initial={app} onSaved={() => setSaved(true)} />
+        <ApplicationForm key={app.id} initial={app} onSaved={() => setSaved(true)} onEdit={() => setSaved(false)} />
       </section>
 
-      <StatusTimeline application={app} />
+      <StatusTimeline application={app} onChanged={() => setSaved(false)} />
 
       {confirming && (
         <ConfirmDelete
