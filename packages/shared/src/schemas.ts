@@ -75,7 +75,7 @@ export const CreateApplicationInputSchema = z.object({
 });
 export type CreateApplicationInput = z.infer<typeof CreateApplicationInputSchema>;
 
-export const UpdateApplicationInputSchema = CreateApplicationInputSchema.partial();
+export const UpdateApplicationInputSchema = z.object(editableFields).partial();
 export type UpdateApplicationInput = z.infer<typeof UpdateApplicationInputSchema>;
 
 export const StatusEntryInputSchema = z.object({

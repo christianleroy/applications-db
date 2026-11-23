@@ -5,6 +5,7 @@ import {
   DateRangeSchema,
   IsoDateSchema,
   SalarySchema,
+  UpdateApplicationInputSchema,
 } from '../src/index';
 
 describe('schemas', () => {
@@ -37,5 +38,12 @@ describe('schemas', () => {
   });
   it('rejects an inverted date range', () => {
     expect(DateRangeSchema.safeParse({ from: '2026-11-10', to: '2026-11-01' }).success).toBe(false);
+  });
+  it('update input carries no defaults, so omitted contacts stay omitted', () => {
+    const r = UpdateApplicationInputSchema.parse({ role: 'X' });
+    expect('contacts' in r).toBe(false);
+    expect(r).toEqual({ role: 'X' });
+    const kept = UpdateApplicationInputSchema.parse({ contacts: [{ name: 'Pat' }] });
+    expect(kept.contacts).toEqual([{ name: 'Pat' }]);
   });
 });
