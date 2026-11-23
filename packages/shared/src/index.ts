@@ -4,3 +4,4 @@ export * from './dates';
 export * from './errors';
 export * from './history';
 export * from './definitions';
+export * from './query';
