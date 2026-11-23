@@ -5,3 +5,4 @@ export * from './errors';
 export * from './history';
 export * from './definitions';
 export * from './query';
+export * from './sankey';
