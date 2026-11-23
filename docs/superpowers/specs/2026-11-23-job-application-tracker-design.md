@@ -1,4 +1,4 @@
-# Job Application Tracker — Design
+# applications-db — Job Application Tracker Design
 
 Date: 2026-11-23
 Status: Draft, awaiting approval
