@@ -122,4 +122,16 @@ describe('ApplicationForm', () => {
     await user.click(screen.getByRole('button', { name: 'Save' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Entry conflicts with history');
   });
+
+  it('shows a contact error on the row it belongs to when blank rows precede it', async () => {
+    const user = userEvent.setup();
+    const { updateSpy } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Add contact' }));
+    await user.click(screen.getByRole('button', { name: 'Add contact' }));
+    await user.type(screen.getByLabelText('Contact 2 email'), 'pat@example.com');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(screen.getByLabelText('Contact 2 name')).toHaveAccessibleDescription(/.+/));
+    expect(screen.getByLabelText('Contact 1 name')).not.toHaveAccessibleDescription();
+    expect(updateSpy).not.toHaveBeenCalled();
+  });
 });

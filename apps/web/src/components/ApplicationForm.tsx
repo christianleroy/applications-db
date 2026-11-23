@@ -77,7 +77,8 @@ export function ApplicationForm({ initial, onSaved }: Props) {
 
   const id = (name: string) => `${uid}-${name}`;
 
-  function buildPatch(): UpdateApplicationInput {
+  /** `contactRows[i]` is the draft row index of the i-th submitted (non-blank) contact. */
+  function buildPatch(): { patch: UpdateApplicationInput; contactRows: number[] } {
     const patch: UpdateApplicationInput = {};
     if (company.trim() !== initial.company) patch.company = company;
     if (role.trim() !== initial.role) patch.role = role;
@@ -102,18 +103,25 @@ export function ApplicationForm({ initial, onSaved }: Props) {
         : { ...(min !== undefined && { min }), ...(max !== undefined && { max }), currency: currency.trim().toUpperCase(), period };
     if (JSON.stringify(nextSalary) !== JSON.stringify(initial.salary ?? null)) patch.salary = nextSalary;
 
-    const nextContacts = contacts.filter((c) => !isBlank(c)).map(toContact);
+    const contactRows = contacts.flatMap((c, i) => (isBlank(c) ? [] : [i]));
+    const nextContacts = contactRows.map((i) => toContact(contacts[i]!));
     if (JSON.stringify(nextContacts) !== JSON.stringify(initial.contacts)) patch.contacts = nextContacts;
-    return patch;
+    return { patch, contactRows };
   }
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setFormError(null);
-    const parsed = UpdateApplicationInputSchema.safeParse(buildPatch());
+    const { patch, contactRows } = buildPatch();
+    const parsed = UpdateApplicationInputSchema.safeParse(patch);
     if (!parsed.success) {
       const next: Record<string, string> = {};
-      for (const issue of parsed.error.issues) next[issueKey(issue.path)] ??= issue.message;
+      for (const issue of parsed.error.issues) {
+        const path = [...issue.path];
+        // Issue indexes refer to the filtered contacts array; map back to the visible row.
+        if (path[0] === 'contacts' && typeof path[1] === 'number') path[1] = contactRows[path[1]] ?? path[1];
+        next[issueKey(path)] ??= issue.message;
+      }
       setErrors(next);
       return;
     }
