@@ -1,4 +1,4 @@
-import type { Source, Status, WorkMode } from '@applications-db/shared';
+import type { DomainErrorCode, Source, Status, WorkMode } from '@applications-db/shared';
 
 export const STATUS_LABELS: Record<Status, string> = {
   applied: 'Applied',
@@ -26,3 +26,15 @@ export const WORK_MODE_LABELS: Record<WorkMode, string> = {
   hybrid: 'Hybrid',
   remote: 'Remote',
 };
+
+export const DOMAIN_ERROR_MESSAGES: Record<DomainErrorCode, string> = {
+  ENTRY_NOT_FOUND: 'That status entry no longer exists.',
+  FIRST_ENTRY_NOT_DELETABLE: "The first status entry can't be deleted.",
+  FIRST_ENTRY_MUST_BE_APPLIED: 'The first status entry must be Applied.',
+  ENTRY_BEFORE_APPLIED: "A status can't be dated before the application date.",
+  NOT_FOUND: 'Application not found.',
+};
+
+export function isDomainErrorCode(code: string): code is DomainErrorCode {
+  return Object.hasOwn(DOMAIN_ERROR_MESSAGES, code);
+}
