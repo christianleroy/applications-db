@@ -596,3 +596,50 @@ expect(formatPercent(0.5)).toBe('50%');
 ## Phase 2 contract notes (for the backend plan)
 
 The API must serve exactly the routes listed in Task 9's `ApiClient`, use `{ code, message, issues? }` error bodies with the status codes listed under `ClientError`, and compute everything with the shared functions (`filterApplications`, history ops, `computeDashboard`, `computeReport`). `GET /dashboard?today=` is an addition to the spec's route list: the dashboard needs follow-ups/stale/recent activity, which `/stats` doesn't carry, and "today" must be the user's local date, so the client sends it.
+
+---
+
+## Execution status (paused 2026-11-23)
+
+Executed with superpowers:subagent-driven-development on branch `phase1-frontend` (local; not pushed, not merged). Each task: fresh implementer → task review (spec + quality) → fix rounds until clean.
+
+| Task | Status | Commits |
+|---|---|---|
+| 1 Scaffold, enums, schemas | ✅ done | 55a8ff0, 847ac7d |
+| 2 Dates, DomainError | ✅ done | a85c6b7 |
+| 3 History operations | ✅ done | 81f0133 |
+| 4 Definitions | ✅ done | 65bfa6a |
+| 5 Search/filter | ✅ done | b7186fd |
+| 6 Sankey | ✅ done | 4a07242, ac92dae |
+| 7 Dashboard/report stats | ✅ done | fc362b1 |
+| 8 Web scaffold | ✅ done | 1358eb0 |
+| 9 Data layer | ✅ done | 1e744fc |
+| 10 Quick-add + form | ✅ done | 83126c3, 997a32a |
+| 11 Search + detail pages | ✅ done | c0bf2dc, a92d131 |
+| 12 Dashboard + Statistics | ⏳ next | |
+| 13 Reports | pending | |
+| 14 Backend gate | pending | |
+| 15 Container, Compose, e2e | pending — **needs owner approval first** for host changes: Playwright Chromium download (`%LOCALAPPDATA%\ms-playwright`), Docker image pulls (`node:22-alpine`, `nginx:alpine`), image/container/network creation | |
+| Final whole-branch review | pending (most capable model; triage the deferred minors below) | |
+
+**To resume:** check out `phase1-frontend`, run `npm install`, `npm test`, `npm run typecheck` (expect all green), then continue subagent-driven development at Task 12. Owner rules in `CLAUDE.md` apply (no push / no host changes without approval).
+
+### Rulings made during execution (binding for remaining tasks and Phase 2)
+
+- `useDashboard()` takes no args; it calls `client.dashboard(todayIso())` internally.
+- Blank company/role messages: "Company is required" / "Role is required".
+- `DOMAIN_ERROR_MESSAGES` lives in `apps/web/src/lib/labels.ts`.
+- `UpdateApplicationInputSchema` has **no defaults** (a partial update never resets `contacts`).
+- **Clearing fields:** in an update patch, `null` = clear the field, absent/`undefined` = leave unchanged. Optional fields (`postingUrl, location, workMode, salary, followUpDate, notes`) are nullable in the update schema only; `updateApplication` deletes null keys. MemoryClient drops `undefined` keys after parsing. **Phase 2 API must accept the same null semantics.**
+- `workMode` filter excludes applications with no work mode.
+- Stats: median days to first response = mean of the two middle values for even counts; breakdowns ordered by `STATUSES`/`SOURCES`; buckets inclusive 0–3/4–7/8–14/15–30/31+; without a range `perWeek` spans the data's weeks; `recentActivity` ties → later history entry first, then application id.
+- ApiClient errors: JSON `{code,message,issues?}` → `ClientError(status, code)`; non-JSON → `HTTP_<status>`; network failure → `ClientError(0,'NETWORK')`; `DELETE` expects 204.
+- Posting URLs render as links only for `http://`/`https://`.
+- ApplicationForm is keyed on application id; untouched fields resync from fresh data, edited fields keep user input.
+- Windows note: Node ignores Olson `TZ` names here; use POSIX strings (`TZ=PST8PDT`) for timezone test runs.
+
+### Deferred minor findings (for the final review to triage)
+
+- Shared: query `page/pageSize` need `z.coerce` for the API; a few weak/vacuous tests (query tie-break & non-mutation, seed counts, stats tie-break and bucket edges, sankey aggregation ≥2, dates edges).
+- Phase 2 contract: unknown status-entry id maps to 409 `ENTRY_NOT_FOUND` in memory mode — decide 404 vs 409 consistently with the API.
+- Web: ApiClient raw `SyntaxError` on 2xx non-JSON body; seed `followUpDate` can precede `dateApplied`; global `retry: false` in App.tsx; search/URL sync races and `setParams` without `replace`; out-of-range page shows empty state; `useApplications` lacks keepPreviousData (table flicker); dialogs lack focus trap/Escape (confirm dialog); timeline add-default status computed at mount; edit sends `note: ''`; `JSON.stringify` change detection; several long JSX lines (no formatter configured).
