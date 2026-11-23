@@ -5,15 +5,10 @@ import {
   removeStatusEntry,
   updateApplication,
   updateStatusEntry,
-  type IdGen,
 } from '../src/history';
+import { NOW, ids } from './helpers';
 
-const NOW = '2026-11-23T10:00:00.000Z';
 const LATER = '2026-11-24T10:00:00.000Z';
-const ids = (start = 1): IdGen => {
-  let n = start;
-  return () => `id-${n++}`;
-};
 
 describe('history operations', () => {
   const base = createApplication(
