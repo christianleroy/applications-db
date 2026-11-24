@@ -1,0 +1,14 @@
+{
+  "name": "applications-db",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "dev": "npm run dev -w apps/web",
+    "e2e": "npm run e2e -w apps/web"
+  }
+}

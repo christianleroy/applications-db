@@ -1,0 +1,16 @@
+@media print {
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  .chart-block {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: none;
+    margin-bottom: 1rem;
+  }
+}

@@ -569,7 +569,42 @@ expect(formatPercent(0.5)).toBe('50%');
 
 ---
 
-### Task 15: Container, Compose, and end-to-end smoke test
+### Task 15: Restyle with shadcn/ui (maroon theme)
+
+**Spec:** `docs/superpowers/specs/2026-11-24-restyle-design.md` (approved 2026-11-24). Purely visual, plus dialog accessibility; no behaviour changes.
+
+**Files:**
+- Create: `apps/web/components.json` (shadcn config), `apps/web/src/lib/utils.ts` (`cn`), `apps/web/src/components/ui/{button,card,input,label,textarea,badge,table,dialog,alert-dialog}.tsx` (+ native-select styling: shadcn `native-select` if the registry has it, else a `selectClassName` export in `ui/input.tsx`)
+- Create: `apps/web/src/lib/statusColors.ts`, `apps/web/src/lib/statusColors.test.ts`
+- Modify: `apps/web/src/index.css` (theme tokens), `apps/web/tsconfig.json` + `apps/web/vite.config.ts` (`@/*` → `src/*` alias), `apps/web/package.json`
+- Modify (restyle only): `Layout`, `QuickAddDialog`, `ApplicationForm`, `Field`, `StatusBadge`, `StatusTimeline`, `EmptyState`, `KpiTile`, `DateRangePicker`, `ReportCharts`, `charts.ts`, and every page in `src/pages/`
+- Test: `statusColors.test.ts`, `charts.test.ts`, `QuickAddDialog.test.tsx`, `StatusTimeline.test.tsx`, `ApplicationDetailPage.test.tsx`; other tests change only where markup changed
+
+**Interfaces:**
+- Consumes: everything from Tasks 8–14 unchanged (props, hooks, routes, accessible names/labels).
+- Produces:
+  - Theme tokens in `index.css` (shadcn variable names): `--primary` maroon `#7B1E2E`, `--primary-foreground` white, primary hover `#5E1622`, `--foreground` `#111111`, `--background` white, borders/muted greys, `--radius` `0.375rem`. No shadows (`shadow-none`), no gradients. Font stays the existing system stack.
+  - `lib/statusColors.ts`: `STATUS_COLORS: Record<Status, { hex: string; badgeClass: string }>`, muted, per spec: applied slate, screening sky, interview amber, offer emerald, accepted green, rejected rose, ghosted stone, withdrawn zinc. `SOURCE_COLORS: Record<Source, string>` (hex, muted categorical, none maroon).
+  - `StatusBadge` uses `STATUS_COLORS[s].badgeClass` (via `ui/badge`); `charts.ts` uses `STATUS_COLORS[s].hex` for status donut items and status Sankey nodes, `SOURCE_COLORS` for source donut and response-rate-by-source bars; the `no_response` Sankey node is neutral grey. Sankey link `color: 'gradient'` stays (link colours come from node colours).
+  - Layout: maroon header bar (`bg-primary`), white app name and nav links, active link underlined; "Add application" is a white button with maroon text. Content on white cards with 1px border.
+  - Quick-add uses `ui/dialog`; every delete/remove confirmation uses `ui/alert-dialog`.
+- Setup: `npx shadcn@latest init` / `add` run from `apps/web` (setup-time download into the npm cache only; nothing global), or copy component source by hand. Commit generated files and `package-lock.json`.
+
+- [ ] **Step 1: Write the failing tests**
+  - `statusColors.test.ts`: every status in `STATUSES` has an entry; the 8 `hex` values are distinct; none equals `#7B1E2E`; every source in `SOURCES` has a `SOURCE_COLORS` entry.
+  - `charts.test.ts`: `statusDonutOption([{status:'interview',count:2}])` → that datum's `itemStyle.color === STATUS_COLORS.interview.hex`; `sankeyOption` gives node `offer` `itemStyle.color === STATUS_COLORS.offer.hex`.
+  - `QuickAddDialog.test.tsx`: open via "Add application", press Escape → dialog gone and focus is on the "Add application" button.
+  - `StatusTimeline.test.tsx` / `ApplicationDetailPage.test.tsx`: the remove/delete confirmation has role `alertdialog`; Escape cancels it and nothing is removed.
+- [ ] **Step 2: Run** `npm test -w apps/web -- statusColors charts QuickAdd StatusTimeline ApplicationDetail`. Expected: FAIL.
+- [ ] **Step 3: Implement.** Add shadcn setup and components, tokens, `statusColors.ts`; swap dialogs; restyle each component and page with the `ui/*` primitives. Keep every existing label, button name and role so behaviour tests still find them. Selects stay native `<select>`.
+- [ ] **Step 4: Run** `npm test && npm run typecheck`. Expected: all PASS, output free of warnings (Radix `DialogContent` requires a `DialogTitle`/`Description`; provide them).
+- [ ] **Step 5: Verify offline:** `npm run build -w apps/web`, then search `apps/web/dist` for `http://` / `https://` outside license comments. Expected: no external asset URLs.
+- [ ] **Step 6: Visual check:** `npm run dev`; the controller opens it in the browser pane and checks each route (Dashboard, Applications, Detail, Statistics, Reports, quick-add) at desktop and 375px widths.
+- [ ] **Step 7: Commit:** `feat(web): restyle with shadcn/ui maroon theme`
+
+---
+
+### Task 16: Container, Compose, and end-to-end smoke test
 
 **Files:**
 - Create: `apps/web/Dockerfile`, `apps/web/nginx.conf`, `.dockerignore`, `docker-compose.yml`
@@ -596,3 +631,58 @@ expect(formatPercent(0.5)).toBe('50%');
 ## Phase 2 contract notes (for the backend plan)
 
 The API must serve exactly the routes listed in Task 9's `ApiClient`, use `{ code, message, issues? }` error bodies with the status codes listed under `ClientError`, and compute everything with the shared functions (`filterApplications`, history ops, `computeDashboard`, `computeReport`). `GET /dashboard?today=` is an addition to the spec's route list: the dashboard needs follow-ups/stale/recent activity, which `/stats` doesn't carry, and "today" must be the user's local date, so the client sends it.
+
+Response and error details to fix at the start of Phase 2:
+- `DELETE /applications/:id` -> 204 with no body.
+- `DELETE /applications/:id/status/:entryId` -> 200 with the updated Application JSON.
+- An unknown application id or unknown status-entry id -> 404. MemoryClient currently maps `ENTRY_NOT_FOUND` to 409; align the two (change MemoryClient to 404 or document otherwise) before the API lands.
+- The API must parse query strings with coercion (`page`/`pageSize` as numbers via `z.coerce`, a single `status=x` value accepted as an array) rather than reusing the browser-side schema as-is.
+- `ApiClient` should wrap a 2xx non-JSON body as `ClientError(status, 'BAD_RESPONSE')` instead of letting a raw `SyntaxError` escape; a misconfigured proxy returning `index.html` is the likely first failure.
+
+---
+
+## Execution status (Phase 1 complete 2026-11-24)
+
+Executed with superpowers:subagent-driven-development on branch `phase1-frontend` (local; not pushed, not merged). Each task: fresh implementer → task review (spec + quality) → fix rounds until clean.
+
+| Task | Status | Commits |
+|---|---|---|
+| 1 Scaffold, enums, schemas | ✅ done | 55a8ff0, 847ac7d |
+| 2 Dates, DomainError | ✅ done | a85c6b7 |
+| 3 History operations | ✅ done | 81f0133 |
+| 4 Definitions | ✅ done | 65bfa6a |
+| 5 Search/filter | ✅ done | b7186fd |
+| 6 Sankey | ✅ done | 4a07242, ac92dae |
+| 7 Dashboard/report stats | ✅ done | fc362b1 |
+| 8 Web scaffold | ✅ done | 1358eb0 |
+| 9 Data layer | ✅ done | 1e744fc |
+| 10 Quick-add + form | ✅ done | 83126c3, 997a32a |
+| 11 Search + detail pages | ✅ done | c0bf2dc, a92d131 |
+| 12 Dashboard + Statistics | ✅ done | 68e15fb |
+| 13 Reports | ✅ done | 1b615a6, 7c670c2 |
+| 14 Backend gate | ✅ done | adb7a1f, a254307, a7373d1 |
+| 15 Restyle with shadcn/ui (added 2026-11-24) | ✅ done (browser-checked at 1024/1280/375px) | 8f2a570, 5aca17c, 963631e |
+| 16 Container, Compose, e2e | ✅ done (owner approved host changes) | 428a991, 51c838a |
+| Final whole-branch review | ✅ ready to merge after one fix wave (readable domain errors, draft revert, per-application page state, locked first status, contact search, Phase 2 notes) | 98cee3b, 175d1e1, 153994a |
+
+**Status:** Phase 1 complete on `phase1-frontend` (local; push awaits owner approval). Phase 2 is on hold by owner decision (2026-11-24); when resumed, run it in a git worktree. The deferred minors below were triaged by the final review: none block merge; the api-mode ones (query coercion, non-JSON 2xx, 404 vs 409, retry/gate details) belong at the start of Phase 2.
+
+### Rulings made during execution (binding for remaining tasks and Phase 2)
+
+- `useDashboard()` takes no args; it calls `client.dashboard(todayIso())` internally.
+- Blank company/role messages: "Company is required" / "Role is required".
+- `DOMAIN_ERROR_MESSAGES` lives in `apps/web/src/lib/labels.ts`.
+- `UpdateApplicationInputSchema` has **no defaults** (a partial update never resets `contacts`).
+- **Clearing fields:** in an update patch, `null` = clear the field, absent/`undefined` = leave unchanged. Optional fields (`postingUrl, location, workMode, salary, followUpDate, notes`) are nullable in the update schema only; `updateApplication` deletes null keys. MemoryClient drops `undefined` keys after parsing. **Phase 2 API must accept the same null semantics.**
+- `workMode` filter excludes applications with no work mode.
+- Stats: median days to first response = mean of the two middle values for even counts; breakdowns ordered by `STATUSES`/`SOURCES`; buckets inclusive 0–3/4–7/8–14/15–30/31+; without a range `perWeek` spans the data's weeks; `recentActivity` ties → later history entry first, then application id.
+- ApiClient errors: JSON `{code,message,issues?}` → `ClientError(status, code)`; non-JSON → `HTTP_<status>`; network failure → `ClientError(0,'NETWORK')`; `DELETE` expects 204.
+- Posting URLs render as links only for `http://`/`https://`.
+- ApplicationForm is keyed on application id; untouched fields resync from fresh data, edited fields keep user input.
+- Windows note: Node ignores Olson `TZ` names here; use POSIX strings (`TZ=PST8PDT`) for timezone test runs.
+
+### Deferred minor findings (for the final review to triage)
+
+- Shared: query `page/pageSize` need `z.coerce` for the API; a few weak/vacuous tests (query tie-break & non-mutation, seed counts, stats tie-break and bucket edges, sankey aggregation ≥2, dates edges).
+- Phase 2 contract: unknown status-entry id maps to 409 `ENTRY_NOT_FOUND` in memory mode — decide 404 vs 409 consistently with the API.
+- Web: ApplicationForm `useDraft` — a field edited then reverted stays "touched", so a later timeline change to `dateApplied` leaves a stale value that Save would send; ApiClient raw `SyntaxError` on 2xx non-JSON body; seed `followUpDate` can precede `dateApplied`; global `retry: false` in App.tsx; search/URL sync races and `setParams` without `replace`; out-of-range page shows empty state; `useApplications` lacks keepPreviousData (table flicker); dialogs lack focus trap/Escape (confirm dialog); timeline add-default status computed at mount; edit sends `note: ''`; `JSON.stringify` change detection; several long JSX lines (no formatter configured).
