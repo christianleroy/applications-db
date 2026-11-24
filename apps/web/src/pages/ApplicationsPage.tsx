@@ -139,13 +139,13 @@ export function ApplicationsPage() {
         </Field>
         {FILTER_GROUPS.map((g) => (
           <fieldset key={g.key} className="min-w-0">
-            <legend className="mb-2 text-sm font-medium">{g.legend}</legend>
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <legend className="mb-2 text-sm leading-none font-medium">{g.legend}</legend>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
               {g.options.map((o) => (
                 <label key={o} className="flex cursor-pointer items-center gap-2 text-sm">
                   <input
                     type="checkbox"
-                    className="size-4 cursor-pointer rounded accent-primary"
+                    className="size-4 shrink-0 cursor-pointer rounded accent-primary"
                     checked={(query[g.key] as string[] | undefined)?.includes(o) ?? false}
                     onChange={() => toggle(g.key, o)}
                   />

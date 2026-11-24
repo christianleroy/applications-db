@@ -7,7 +7,7 @@ type FieldProps = { id: string; label: string; error?: string; className?: strin
 /** A labelled form control with its validation message rendered next to it. */
 export function Field({ id, label, error, className, children }: FieldProps) {
   return (
-    <div className={cn('grid gap-2', className)}>
+    <div className={cn('grid content-start gap-2', className)}>
       <Label htmlFor={id}>{label}</Label>
       {children}
       {error && (

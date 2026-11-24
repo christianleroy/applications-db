@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 /** A styled native <select>: keeps browser keyboard and mobile behaviour. */
 function NativeSelect({ className, ...props }: React.ComponentProps<'select'>) {
   return (
-    <div data-slot="native-select-wrapper" className="relative w-full has-[select:disabled]:opacity-50">
+    <div data-slot="native-select-wrapper" className="relative h-fit w-full self-start has-[select:disabled]:opacity-50">
       <select
         data-slot="native-select"
         className={cn(
