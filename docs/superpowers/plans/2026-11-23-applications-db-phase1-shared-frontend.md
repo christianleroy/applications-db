@@ -641,7 +641,7 @@ Response and error details to fix at the start of Phase 2:
 
 ---
 
-## Execution status (resumed 2026-11-24)
+## Execution status (Phase 1 complete 2026-11-24)
 
 Executed with superpowers:subagent-driven-development on branch `phase1-frontend` (local; not pushed, not merged). Each task: fresh implementer → task review (spec + quality) → fix rounds until clean.
 
@@ -659,13 +659,13 @@ Executed with superpowers:subagent-driven-development on branch `phase1-frontend
 | 10 Quick-add + form | ✅ done | 83126c3, 997a32a |
 | 11 Search + detail pages | ✅ done | c0bf2dc, a92d131 |
 | 12 Dashboard + Statistics | ✅ done | 68e15fb |
-| 13 Reports | ✅ done (review pending at time of writing) | 1b615a6 |
-| 14 Backend gate | ⏳ next | |
-| 15 Restyle with shadcn/ui (added 2026-11-24) | pending | |
-| 16 Container, Compose, e2e | pending — **needs owner approval first** for host changes: Playwright Chromium download (`%LOCALAPPDATA%\ms-playwright`), Docker image pulls (`node:22-alpine`, `nginx:alpine`), image/container/network creation | |
-| Final whole-branch review | pending (most capable model; triage the deferred minors below) | |
+| 13 Reports | ✅ done | 1b615a6, 7c670c2 |
+| 14 Backend gate | ✅ done | adb7a1f, a254307, a7373d1 |
+| 15 Restyle with shadcn/ui (added 2026-11-24) | ✅ done (browser-checked at 1024/1280/375px) | 8f2a570, 5aca17c, 963631e |
+| 16 Container, Compose, e2e | ✅ done (owner approved host changes) | 428a991, 51c838a |
+| Final whole-branch review | ✅ ready to merge after one fix wave (readable domain errors, draft revert, per-application page state, locked first status, contact search, Phase 2 notes) | 98cee3b, 175d1e1, 153994a |
 
-**To resume:** check out `phase1-frontend`, run `npm install`, `npm test`, `npm run typecheck` (expect all green), then continue subagent-driven development at Task 12. Owner rules in `CLAUDE.md` apply (no push / no host changes without approval).
+**Status:** Phase 1 complete on `phase1-frontend` (local; push awaits owner approval). Phase 2 is on hold by owner decision (2026-11-24); when resumed, run it in a git worktree. The deferred minors below were triaged by the final review: none block merge; the api-mode ones (query coercion, non-JSON 2xx, 404 vs 409, retry/gate details) belong at the start of Phase 2.
 
 ### Rulings made during execution (binding for remaining tasks and Phase 2)
 
