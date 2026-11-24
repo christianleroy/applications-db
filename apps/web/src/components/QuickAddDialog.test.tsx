@@ -61,7 +61,10 @@ describe('QuickAddDialog', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     const page = await client.list(defaultQuery);
     expect(page.total).toBe(1);
-    expect(screen.getByTestId('where')).toHaveTextContent(`/applications/${page.items[0]!.id}`);
+    // onClose runs before navigate() in the component, so the location updates a render later.
+    await waitFor(() =>
+      expect(screen.getByTestId('where')).toHaveTextContent(`/applications/${page.items[0]!.id}`),
+    );
   });
 
   it('closes on Escape', async () => {
