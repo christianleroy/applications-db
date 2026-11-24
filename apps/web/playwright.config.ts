@@ -9,7 +9,7 @@ export default defineConfig({
   webServer: {
     command: 'npm run build && npm run preview -- --port 4173 --strictPort',
     url: 'http://localhost:4173',
-    reuseExistingServer: false,
+    reuseExistingServer: !process.env.CI,
     env: { VITE_DATA_SOURCE: 'memory' },
     timeout: 180_000,
   },

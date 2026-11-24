@@ -21,10 +21,16 @@ test('smoke: add an application, advance its status, find it, see reports', asyn
   await expect(page.getByRole('heading', { level: 1 }).locator('xpath=following-sibling::*').getByText('Interview', { exact: true })).toBeVisible();
 
   await page.getByRole('link', { name: 'Applications', exact: true }).click();
+  const bodyRows = page.locator('tbody tr');
+  const otherRow = bodyRows.filter({ hasNotText: 'Smoke Test Co' }).first();
+  await expect(otherRow).toBeVisible();
+  const otherCompany = ((await otherRow.getByRole('link').first().textContent()) ?? '').split(' - ')[0]!.trim();
+  expect(otherCompany).not.toBe('');
+
   await page.getByLabel('Search').fill('smoke');
-  await expect(page.getByRole('link', { name: /Smoke Test Co/ })).toHaveCount(1);
-  await expect(page.getByRole('link', { name: /Smoke Test Co/ })).toBeVisible();
-  await expect(page.getByRole('row').filter({ hasText: 'Smoke Test Co' })).toHaveCount(1);
+  await expect(bodyRows).toHaveCount(1);
+  await expect(bodyRows.first()).toContainText('Smoke Test Co');
+  await expect(page.getByText(otherCompany)).toHaveCount(0);
 
   await page.getByRole('link', { name: 'Reports', exact: true }).click();
   await expect(page.getByRole('img', { name: 'Status flow (Sankey chart)' })).toBeVisible();
