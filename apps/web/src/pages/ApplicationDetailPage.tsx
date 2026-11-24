@@ -1,8 +1,21 @@
-import { useState } from 'react';
+import { useState, type ReactElement } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeftIcon, CheckIcon, Trash2Icon } from 'lucide-react';
 import { ApplicationForm } from '../components/ApplicationForm';
+import { PageStatus } from '../components/PageHeader';
 import { StatusBadge } from '../components/StatusBadge';
 import { StatusTimeline } from '../components/StatusTimeline';
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 import { ClientError } from '../data/client';
 import { useApplication, useDeleteApplication } from '../data/hooks';
 
@@ -10,35 +23,50 @@ const isHttpUrl = (url: string) => url.startsWith('http://') || url.startsWith('
 
 function BackLink() {
   return (
-    <Link to="/applications" className="text-blue-700 underline">
+    <Link
+      to="/applications"
+      className="inline-flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+    >
+      <ArrowLeftIcon aria-hidden="true" className="size-4" />
       Back to applications
     </Link>
   );
 }
 
-function ConfirmDelete({ company, busy, error, onConfirm, onCancel }: { company: string; busy: boolean; error: string | null; onConfirm: () => void; onCancel: () => void }) {
+type ConfirmDeleteProps = {
+  company: string;
+  busy: boolean;
+  error: string | null;
+  onConfirm: () => void;
+  onCancel: () => void;
+  trigger: ReactElement;
+  open: boolean;
+  onOpen: () => void;
+};
+
+function ConfirmDelete({ company, busy, error, onConfirm, onCancel, trigger, open, onOpen }: ConfirmDeleteProps) {
   return (
-    <div className="fixed inset-0 z-10 flex items-center justify-center bg-slate-900/40 p-4">
-      <div role="dialog" aria-modal="true" aria-labelledby="confirm-delete-title" className="w-full max-w-md rounded bg-white p-5 shadow-lg">
-        <h2 id="confirm-delete-title" className="text-lg font-semibold">
-          Delete application
-        </h2>
-        <p className="mt-2 text-sm text-slate-700">Delete the application to {company}? This can't be undone.</p>
+    <AlertDialog open={open} onOpenChange={(next) => (next ? onOpen() : onCancel())}>
+      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete application</AlertDialogTitle>
+          <AlertDialogDescription>Delete the application to {company}? This can't be undone.</AlertDialogDescription>
+        </AlertDialogHeader>
         {error && (
-          <p role="alert" className="mt-2 text-sm text-red-700">
+          <p role="alert" className="text-sm text-destructive">
             {error}
           </p>
         )}
-        <div className="mt-4 flex justify-end gap-2">
-          <button type="button" onClick={onCancel} className="rounded border border-slate-300 px-3 py-1.5 text-sm">
-            Cancel
-          </button>
-          <button type="button" disabled={busy} onClick={onConfirm} className="rounded bg-red-700 px-3 py-1.5 text-sm text-white disabled:opacity-60">
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          {/* A plain button, not AlertDialogAction: the dialog stays open until the delete succeeds or fails. */}
+          <Button type="button" variant="destructive" disabled={busy} onClick={onConfirm}>
             Delete
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
@@ -51,13 +79,13 @@ export function ApplicationDetailPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  if (isPending) return <p className="text-slate-600">Loading...</p>;
+  if (isPending) return <PageStatus>Loading...</PageStatus>;
   if (!app) {
     const notFound = error instanceof ClientError && error.status === 404;
     return (
-      <div className="space-y-2">
-        <h1 className="text-xl font-semibold">{notFound ? 'Application not found' : 'Could not load the application'}</h1>
+      <div className="space-y-3">
         <BackLink />
+        <h1 className="text-2xl font-semibold tracking-tight">{notFound ? 'Application not found' : 'Could not load the application'}</h1>
       </div>
     );
   }
@@ -75,35 +103,56 @@ export function ApplicationDetailPage() {
   return (
     <div className="space-y-6">
       <BackLink />
-      <header className="flex flex-wrap items-center gap-3">
-        <h1 className="text-xl font-semibold">
-          {app.company} <span className="font-normal text-slate-600">- {app.role}</span>
-        </h1>
-        <StatusBadge status={app.status} />
-        <button
-          type="button"
-          onClick={() => setConfirming(true)}
-          className="ml-auto rounded border border-red-300 px-3 py-1.5 text-sm text-red-700"
-        >
-          Delete application
-        </button>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0 space-y-2">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {app.company} <span className="font-normal text-muted-foreground">- {app.role}</span>
+            </h1>
+            <StatusBadge status={app.status} />
+          </div>
+          {app.postingUrl && (
+            <p className="text-sm">
+              {isHttpUrl(app.postingUrl) ? (
+                <a
+                  href={app.postingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="break-all text-primary underline underline-offset-4 hover:text-primary-hover"
+                >
+                  {app.postingUrl}
+                </a>
+              ) : (
+                <span className="break-all text-muted-foreground">{app.postingUrl}</span>
+              )}
+            </p>
+          )}
+        </div>
+        <ConfirmDelete
+          company={app.company}
+          busy={remove.isPending}
+          error={deleteError}
+          onConfirm={confirmDelete}
+          open={confirming}
+          onOpen={() => setConfirming(true)}
+          onCancel={() => {
+            setConfirming(false);
+            setDeleteError(null);
+          }}
+          trigger={
+            <Button type="button" variant="outline" className="border-destructive/40 text-destructive hover:bg-destructive/5 hover:text-destructive">
+              <Trash2Icon aria-hidden="true" />
+              Delete application
+            </Button>
+          }
+        />
       </header>
 
-      {app.postingUrl && (
-        <p className="text-sm">
-          {isHttpUrl(app.postingUrl) ? (
-            <a href={app.postingUrl} target="_blank" rel="noopener noreferrer" className="break-all text-blue-700 underline">
-              {app.postingUrl}
-            </a>
-          ) : (
-            <span className="break-all">{app.postingUrl}</span>
-          )}
-        </p>
-      )}
-
-      <section aria-label="Details" className="space-y-2">
+      <section aria-label="Details" className="space-y-4 rounded-lg border bg-card p-5 sm:p-6">
+        <h2 className="text-base font-semibold">Details</h2>
         {saved && (
-          <p role="status" className="rounded bg-green-50 px-3 py-2 text-sm text-green-800">
+          <p role="status" className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+            <CheckIcon aria-hidden="true" className="size-4" />
             Saved
           </p>
         )}
@@ -111,19 +160,6 @@ export function ApplicationDetailPage() {
       </section>
 
       <StatusTimeline application={app} onChanged={() => setSaved(false)} />
-
-      {confirming && (
-        <ConfirmDelete
-          company={app.company}
-          busy={remove.isPending}
-          error={deleteError}
-          onConfirm={confirmDelete}
-          onCancel={() => {
-            setConfirming(false);
-            setDeleteError(null);
-          }}
-        />
-      )}
     </div>
   );
 }

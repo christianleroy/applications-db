@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { addDays, todayIso, type DateRange } from '@applications-db/shared';
-import { Field, errorProps, inputClass } from './Field';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { Field, errorProps } from './Field';
 
 type Props = { value: DateRange; onChange: (range: DateRange) => void };
 
@@ -28,15 +31,20 @@ export function DateRangePicker({ value, onChange }: Props) {
   }
 
   const btn = (active: boolean) =>
-    `rounded border px-3 py-1.5 text-sm ${active ? 'border-blue-700 bg-blue-50 text-blue-800' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'}`;
+    cn(
+      'rounded-none not-first:border-l',
+      active && 'bg-primary text-primary-foreground hover:bg-primary-hover hover:text-primary-foreground',
+    );
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Date range">
+    <div className="space-y-4">
+      <div className="inline-flex max-w-full flex-wrap overflow-hidden rounded-md border bg-background" role="group" aria-label="Date range">
         {PRESETS.map((p) => (
-          <button
+          <Button
             key={p.label}
             type="button"
+            variant="ghost"
+            size="sm"
             aria-pressed={activePreset === p.label}
             className={btn(activePreset === p.label)}
             onClick={() => {
@@ -48,10 +56,12 @@ export function DateRangePicker({ value, onChange }: Props) {
             }}
           >
             {p.label}
-          </button>
+          </Button>
         ))}
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           aria-pressed={showCustom}
           className={btn(showCustom)}
           onClick={() => {
@@ -61,24 +71,22 @@ export function DateRangePicker({ value, onChange }: Props) {
           }}
         >
           Custom
-        </button>
+        </Button>
       </div>
       {showCustom && (
-        <div className="flex flex-wrap items-start gap-3">
+        <div className="grid max-w-md gap-4 sm:grid-cols-2">
           <Field id="range-from" label="Start date">
-            <input
+            <Input
               id="range-from"
               type="date"
-              className={inputClass}
               value={from}
               onChange={(e) => update(e.target.value, to)}
             />
           </Field>
           <Field id="range-to" label="End date" error={inverted ? 'Start date must be on or before end date' : undefined}>
-            <input
+            <Input
               id="range-to"
               type="date"
-              className={inputClass}
               value={to}
               onChange={(e) => update(from, e.target.value)}
               {...errorProps('range-to', inverted ? 'x' : undefined)}

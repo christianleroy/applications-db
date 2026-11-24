@@ -9,6 +9,7 @@ import {
   sourceDonutOption,
   statusDonutOption,
 } from './charts';
+import { cn } from '@/lib/utils';
 
 export type ChartKey = 'status-flow' | 'by-status' | 'by-source' | 'per-week' | 'response-rate-by-source' | 'days-to-response';
 
@@ -45,10 +46,10 @@ export function ReportCharts({ data, renderAction, onChartReady }: Props) {
       {charts.map((c) => (
         <section
           key={c.key}
-          className={`chart-block rounded border border-slate-200 bg-white p-4 ${'wide' in c ? 'md:col-span-2' : ''}`}
+          className={cn('chart-block min-w-0 rounded-lg border bg-card p-5', 'wide' in c && 'md:col-span-2')}
         >
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <h2 className="font-semibold text-slate-900">{c.title}</h2>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold">{c.title}</h2>
             {renderAction?.({ key: c.key, title: c.title })}
           </div>
           <EChart option={c.option} ariaLabel={c.label} onReady={onChartReady && ((i) => onChartReady(c.key, i))} />

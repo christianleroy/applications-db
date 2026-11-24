@@ -3,7 +3,23 @@ import { PROGRESS_STAGES, STATUSES, todayIso, type Application, type Status, typ
 import { useAddStatus, useRemoveStatus, useUpdateStatus } from '../data/hooks';
 import { DOMAIN_ERROR_MESSAGES, STATUS_LABELS, isDomainErrorCode } from '../lib/labels';
 import { formatDate } from '../lib/format';
-import { inputClass } from './Field';
+import { STATUS_COLORS } from '../lib/statusColors';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from './Field';
 
 function errorMessage(err: unknown): string {
   if (err && typeof err === 'object' && 'code' in err && typeof err.code === 'string' && isDomainErrorCode(err.code)) {
@@ -16,8 +32,6 @@ function nextStage(current: Status): Status {
   const i = (PROGRESS_STAGES as readonly Status[]).indexOf(current);
   return i >= 0 && i < PROGRESS_STAGES.length - 1 ? PROGRESS_STAGES[i + 1]! : 'rejected';
 }
-
-const labelClass = 'mb-1 block text-sm font-medium text-slate-700';
 
 type FieldsProps = {
   uid: string;
@@ -33,30 +47,21 @@ type FieldsProps = {
 function EntryFields({ uid, status, date, note, onStatus, onDate, onNote }: FieldsProps) {
   return (
     <>
-      <div>
-        <label htmlFor={`${uid}-status`} className={labelClass}>
-          Status
-        </label>
-        <select id={`${uid}-status`} className={inputClass} value={status} onChange={(e) => onStatus(e.target.value as Status)}>
+      <Field id={`${uid}-status`} label="Status">
+        <NativeSelect id={`${uid}-status`} value={status} onChange={(e) => onStatus(e.target.value as Status)}>
           {STATUSES.map((s) => (
             <option key={s} value={s}>
               {STATUS_LABELS[s]}
             </option>
           ))}
-        </select>
-      </div>
-      <div>
-        <label htmlFor={`${uid}-date`} className={labelClass}>
-          Date
-        </label>
-        <input id={`${uid}-date`} type="date" className={inputClass} value={date} onChange={(e) => onDate(e.target.value)} />
-      </div>
-      <div>
-        <label htmlFor={`${uid}-note`} className={labelClass}>
-          Note
-        </label>
-        <input id={`${uid}-note`} className={inputClass} value={note} onChange={(e) => onNote(e.target.value)} />
-      </div>
+        </NativeSelect>
+      </Field>
+      <Field id={`${uid}-date`} label="Date">
+        <Input id={`${uid}-date`} type="date" value={date} onChange={(e) => onDate(e.target.value)} />
+      </Field>
+      <Field id={`${uid}-note`} label="Note">
+        <Input id={`${uid}-note`} value={note} onChange={(e) => onNote(e.target.value)} />
+      </Field>
     </>
   );
 }
@@ -98,27 +103,32 @@ function TimelineEntry({ applicationId, entry, deletable, onChanged }: EntryProp
   const label = `${STATUS_LABELS[entry.status]} on ${formatDate(entry.date)}`;
 
   return (
-    <li className="rounded border border-slate-200 bg-white p-3">
+    <li className="px-5 py-3">
       {editing ? (
         <form onSubmit={save} className="grid gap-3 sm:grid-cols-4">
           <EntryFields uid={uid} status={status} date={date} note={note} onStatus={setStatus} onDate={setDate} onNote={setNote} />
           <div className="flex items-end gap-2">
-            <button type="submit" disabled={update.isPending} className="rounded bg-blue-700 px-3 py-1.5 text-sm text-white disabled:opacity-60">
+            <Button type="submit" size="sm" disabled={update.isPending}>
               Save
-            </button>
-            <button type="button" onClick={() => setEditing(false)} className="rounded border border-slate-300 px-3 py-1.5 text-sm">
+            </Button>
+            <Button type="button" size="sm" variant="outline" onClick={() => setEditing(false)}>
               Cancel
-            </button>
+            </Button>
           </div>
         </form>
       ) : (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <span className="w-28 text-sm text-slate-600">{formatDate(entry.date)}</span>
-          <span className="font-medium">{STATUS_LABELS[entry.status]}</span>
-          {entry.note && <span className="flex-1 text-sm text-slate-700">{entry.note}</span>}
-          <span className="ml-auto flex gap-2">
-            <button
+          <span className="w-28 text-sm text-muted-foreground tabular-nums">{formatDate(entry.date)}</span>
+          <span className="flex items-center gap-2 font-medium">
+            <span aria-hidden="true" className="size-2 rounded-full" style={{ backgroundColor: STATUS_COLORS[entry.status].hex }} />
+            {STATUS_LABELS[entry.status]}
+          </span>
+          {entry.note && <span className="flex-1 text-sm text-muted-foreground">{entry.note}</span>}
+          <span className="ml-auto flex gap-1">
+            <Button
               type="button"
+              size="sm"
+              variant="ghost"
               aria-label={`Edit ${label}`}
               onClick={() => {
                 setStatus(entry.status);
@@ -126,26 +136,42 @@ function TimelineEntry({ applicationId, entry, deletable, onChanged }: EntryProp
                 setNote(entry.note ?? '');
                 setEditing(true);
               }}
-              className="rounded border border-slate-300 px-2 py-1 text-sm"
             >
               Edit
-            </button>
+            </Button>
             {deletable && (
-              <button
-                type="button"
-                aria-label={`Delete ${label}`}
-                disabled={remove.isPending}
-                onClick={onDelete}
-                className="rounded border border-slate-300 px-2 py-1 text-sm text-red-700"
-              >
-                Delete
-              </button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    aria-label={`Delete ${label}`}
+                    disabled={remove.isPending}
+                    className="text-destructive hover:bg-destructive/5 hover:text-destructive"
+                  >
+                    Delete
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete status entry</AlertDialogTitle>
+                    <AlertDialogDescription>Remove “{label}” from the timeline? This can't be undone.</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction className={buttonVariants({ variant: 'destructive' })} onClick={() => void onDelete()}>
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </span>
         </div>
       )}
       {error && (
-        <p role="alert" className="mt-2 text-sm text-red-700">
+        <p role="alert" className="mt-2 text-sm text-destructive">
           {error}
         </p>
       )}
@@ -179,15 +205,15 @@ function AddStatusForm({ application, onChanged }: { application: Application; o
   }
 
   return (
-    <form onSubmit={submit} className="grid gap-3 rounded border border-slate-200 bg-slate-50 p-3 sm:grid-cols-4">
+    <form onSubmit={submit} className="grid gap-3 border-t bg-muted/40 px-5 py-4 sm:grid-cols-4">
       <EntryFields uid={uid} status={status} date={date} note={note} onStatus={setStatus} onDate={setDate} onNote={setNote} />
       <div className="flex items-end">
-        <button type="submit" disabled={add.isPending} className="rounded bg-blue-700 px-3 py-1.5 text-sm text-white disabled:opacity-60">
+        <Button type="submit" disabled={add.isPending} className="w-full sm:w-auto">
           Add status
-        </button>
+        </Button>
       </div>
       {error && (
-        <p role="alert" className="text-sm text-red-700 sm:col-span-4">
+        <p role="alert" className="text-sm text-destructive sm:col-span-4">
           {error}
         </p>
       )}
@@ -197,14 +223,22 @@ function AddStatusForm({ application, onChanged }: { application: Application; o
 
 export function StatusTimeline({ application, onChanged }: { application: Application; onChanged?: () => void }) {
   return (
-    <section aria-label="Status timeline" className="space-y-3">
-      <h2 className="text-lg font-semibold">Timeline</h2>
-      <ol className="space-y-2">
-        {application.statusHistory.map((entry, i) => (
-          <TimelineEntry key={entry.id} applicationId={application.id} entry={entry} deletable={i > 0} onChanged={onChanged} />
-        ))}
-      </ol>
-      <AddStatusForm application={application} onChanged={onChanged} />
+    <section aria-label="Status timeline">
+      <Card className="gap-0 overflow-hidden pb-0">
+        <CardHeader className="pb-3">
+          <CardTitle>
+            <h2 className="text-base">Timeline</h2>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="px-0">
+          <ol className="divide-y border-t">
+            {application.statusHistory.map((entry, i) => (
+              <TimelineEntry key={entry.id} applicationId={application.id} entry={entry} deletable={i > 0} onChanged={onChanged} />
+            ))}
+          </ol>
+          <AddStatusForm application={application} onChanged={onChanged} />
+        </CardContent>
+      </Card>
     </section>
   );
 }

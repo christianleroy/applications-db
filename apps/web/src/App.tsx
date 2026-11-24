@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { PlusIcon } from 'lucide-react';
 import { Route, Routes } from 'react-router-dom';
 import { config } from './config';
 import { ClientProvider, createClient } from './data/ClientProvider';
 import { BackendGate, createGateSignal, createQueryClient } from './components/BackendGate';
 import { Layout } from './components/Layout';
+import { Button } from '@/components/ui/button';
 import { QuickAddDialog } from './components/QuickAddDialog';
 import { ApplicationDetailPage } from './pages/ApplicationDetailPage';
 import { ApplicationsPage } from './pages/ApplicationsPage';
@@ -27,16 +29,21 @@ export function App() {
               element={
                 <Layout
                   headerActions={
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => setQuickAddOpen(true)}
-                        className="rounded bg-blue-700 px-3 py-1.5 text-sm text-white hover:bg-blue-800"
-                      >
-                        Add application
-                      </button>
-                      <QuickAddDialog open={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
-                    </>
+                    <QuickAddDialog
+                      open={quickAddOpen}
+                      onClose={() => setQuickAddOpen(false)}
+                      trigger={
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => setQuickAddOpen(true)}
+                          className="bg-white text-primary hover:bg-white/90 focus-visible:ring-white/60"
+                        >
+                          <PlusIcon aria-hidden="true" />
+                          Add application
+                        </Button>
+                      }
+                    />
                   }
                 />
               }

@@ -1,15 +1,43 @@
-import { useEffect, useId, useState, type FormEvent } from 'react';
+import { useId, useState, type FormEvent, type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CreateApplicationInputSchema, SOURCES, todayIso, type Source } from '@applications-db/shared';
 import { useCreateApplication } from '../data/hooks';
 import { SOURCE_LABELS } from '../lib/labels';
-import { Field, inputClass } from './Field';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field, errorProps } from './Field';
 
-type Props = { open: boolean; onClose: () => void };
+type Props = {
+  open: boolean;
+  onClose: () => void;
+  /** Optional button that opens the dialog; focus returns to it when the dialog closes. */
+  trigger?: ReactElement;
+};
 
-export function QuickAddDialog({ open, onClose }: Props) {
-  // Mounted only while open so every opening starts from a fresh form.
-  return open ? <QuickAddForm onClose={onClose} /> : null;
+export function QuickAddDialog({ open, onClose, trigger }: Props) {
+  return (
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add application</DialogTitle>
+          <DialogDescription>The essentials now; add the details on the next page.</DialogDescription>
+        </DialogHeader>
+        {/* Content unmounts while closed, so every opening starts from a fresh form. */}
+        <QuickAddForm onClose={onClose} />
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function QuickAddForm({ onClose }: { onClose: () => void }) {
@@ -22,14 +50,6 @@ function QuickAddForm({ onClose }: { onClose: () => void }) {
   const [dateApplied, setDateApplied] = useState(todayIso());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -52,71 +72,57 @@ function QuickAddForm({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-10 flex items-center justify-center bg-slate-900/40 p-4">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={`${uid}-title`}
-        className="w-full max-w-md rounded bg-white p-5 shadow-lg"
-      >
-        <h2 id={`${uid}-title`} className="mb-4 text-lg font-semibold">
-          Add application
-        </h2>
-        <form onSubmit={submit} noValidate className="space-y-3">
-          {formError && (
-            <p role="alert" className="rounded bg-red-50 px-3 py-2 text-sm text-red-800">
-              {formError}
-            </p>
-          )}
-          <Field id={`${uid}-company`} label="Company" error={errors.company}>
-            <input
-              id={`${uid}-company`}
-              autoFocus
-              className={inputClass}
-              value={company}
-              onChange={(e) => setCompany(e.target.value)}
-            />
-          </Field>
-          <Field id={`${uid}-role`} label="Role" error={errors.role}>
-            <input id={`${uid}-role`} className={inputClass} value={role} onChange={(e) => setRole(e.target.value)} />
-          </Field>
-          <Field id={`${uid}-source`} label="Source" error={errors.source}>
-            <select
-              id={`${uid}-source`}
-              className={inputClass}
-              value={source}
-              onChange={(e) => setSource(e.target.value as Source)}
-            >
-              {SOURCES.map((s) => (
-                <option key={s} value={s}>
-                  {SOURCE_LABELS[s]}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field id={`${uid}-date`} label="Date applied" error={errors.dateApplied}>
-            <input
-              id={`${uid}-date`}
-              type="date"
-              className={inputClass}
-              value={dateApplied}
-              onChange={(e) => setDateApplied(e.target.value)}
-            />
-          </Field>
-          <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="rounded border border-slate-300 px-3 py-1.5 text-sm">
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={create.isPending}
-              className="rounded bg-blue-700 px-3 py-1.5 text-sm text-white disabled:opacity-60"
-            >
-              Add
-            </button>
-          </div>
-        </form>
+    <form onSubmit={submit} noValidate className="grid gap-4">
+      {formError && (
+        <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+          {formError}
+        </p>
+      )}
+      <Field id={`${uid}-company`} label="Company" error={errors.company}>
+        <Input
+          id={`${uid}-company`}
+          autoFocus
+          value={company}
+          onChange={(e) => setCompany(e.target.value)}
+          {...errorProps(`${uid}-company`, errors.company)}
+        />
+      </Field>
+      <Field id={`${uid}-role`} label="Role" error={errors.role}>
+        <Input
+          id={`${uid}-role`}
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+          {...errorProps(`${uid}-role`, errors.role)}
+        />
+      </Field>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field id={`${uid}-source`} label="Source" error={errors.source}>
+          <NativeSelect id={`${uid}-source`} value={source} onChange={(e) => setSource(e.target.value as Source)}>
+            {SOURCES.map((s) => (
+              <option key={s} value={s}>
+                {SOURCE_LABELS[s]}
+              </option>
+            ))}
+          </NativeSelect>
+        </Field>
+        <Field id={`${uid}-date`} label="Date applied" error={errors.dateApplied}>
+          <Input
+            id={`${uid}-date`}
+            type="date"
+            value={dateApplied}
+            onChange={(e) => setDateApplied(e.target.value)}
+            {...errorProps(`${uid}-date`, errors.dateApplied)}
+          />
+        </Field>
       </div>
-    </div>
+      <DialogFooter className="pt-2">
+        <Button type="button" variant="outline" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={create.isPending}>
+          Add
+        </Button>
+      </DialogFooter>
+    </form>
   );
 }

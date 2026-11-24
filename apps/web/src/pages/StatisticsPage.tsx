@@ -1,4 +1,6 @@
+import { EmptyState } from '../components/EmptyState';
 import { KpiTile } from '../components/KpiTile';
+import { PageHeader, PageStatus } from '../components/PageHeader';
 import { ReportCharts } from '../components/ReportCharts';
 import { useStatistics } from '../data/hooks';
 import { formatPercent } from '../lib/format';
@@ -6,12 +8,12 @@ import { formatPercent } from '../lib/format';
 export function StatisticsPage() {
   const { data, isPending, isError } = useStatistics();
 
-  if (isPending) return <p className="text-slate-600">Loading...</p>;
-  if (isError) return <p role="alert" className="text-red-700">Could not load statistics.</p>;
+  if (isPending) return <PageStatus>Loading...</PageStatus>;
+  if (isError) return <PageStatus error>Could not load statistics.</PageStatus>;
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-xl font-semibold">Statistics</h1>
+    <div className="space-y-8">
+      <PageHeader title="Statistics" description="All applications, all time." />
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <KpiTile label="Total applications" value={data.total} />
         <KpiTile label="Responded" value={data.responded} />
@@ -22,7 +24,7 @@ export function StatisticsPage() {
         />
       </div>
       {data.total === 0 ? (
-        <p className="text-slate-600">No applications yet, so there is nothing to chart.</p>
+        <EmptyState title="No applications yet, so there is nothing to chart." />
       ) : (
         <ReportCharts data={data} />
       )}

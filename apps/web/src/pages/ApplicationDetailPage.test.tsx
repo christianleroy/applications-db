@@ -70,7 +70,7 @@ describe('ApplicationDetailPage', () => {
     const app = make();
     const client = setup(app);
     await user.click(await screen.findByRole('button', { name: 'Delete application' }));
-    expect(screen.getByRole('dialog', { name: 'Delete application' })).toBeInTheDocument();
+    expect(await screen.findByRole('alertdialog', { name: 'Delete application' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Delete' }));
     expect(await screen.findByText('list page')).toBeInTheDocument();
     await expect(client.get(app.id)).rejects.toMatchObject({ status: 404 });
@@ -81,8 +81,20 @@ describe('ApplicationDetailPage', () => {
     const app = make();
     const client = setup(app);
     await user.click(await screen.findByRole('button', { name: 'Delete application' }));
-    await user.click(screen.getByRole('button', { name: 'Cancel' }));
-    expect(screen.queryByRole('dialog')).toBeNull();
+    await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+    await expect(client.get(app.id)).resolves.toMatchObject({ id: app.id });
+  });
+
+  it('cancels the delete confirmation on Escape', async () => {
+    const user = userEvent.setup();
+    const app = make();
+    const client = setup(app);
+    await user.click(await screen.findByRole('button', { name: 'Delete application' }));
+    expect(await screen.findByRole('alertdialog', { name: 'Delete application' })).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+    expect(screen.getByRole('heading', { name: /Acme/ })).toBeInTheDocument();
     await expect(client.get(app.id)).resolves.toMatchObject({ id: app.id });
   });
 

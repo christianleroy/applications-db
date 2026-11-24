@@ -9,9 +9,15 @@ import {
   type ApplicationQuery,
   type SortKey,
 } from '@applications-db/shared';
+import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from 'lucide-react';
 import { EmptyState } from '../components/EmptyState';
-import { inputClass } from '../components/Field';
+import { Field } from '../components/Field';
+import { PageHeader, PageStatus } from '../components/PageHeader';
 import { StatusBadge } from '../components/StatusBadge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useApplications } from '../data/hooks';
 import { formatDate } from '../lib/format';
 import { SOURCE_LABELS, STATUS_LABELS, WORK_MODE_LABELS } from '../lib/labels';
@@ -108,133 +114,133 @@ export function ApplicationsPage() {
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Applications</h1>
+    <div className="space-y-6">
+      <PageHeader title="Applications" />
 
-      <div className="grid gap-4 rounded border border-slate-200 bg-white p-4 md:grid-cols-4">
-        <div className="md:col-span-2">
-          <label htmlFor="app-search" className="mb-1 block text-sm font-medium text-slate-700">
-            Search
-          </label>
-          <input
-            id="app-search"
-            type="search"
-            className={inputClass}
-            placeholder="Company, role, notes, contacts"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <div>
-          <label htmlFor="app-from" className="mb-1 block text-sm font-medium text-slate-700">
-            Applied from
-          </label>
-          <input id="app-from" type="date" className={inputClass} value={query.from ?? ''} onChange={(e) => update({ from: e.target.value || undefined })} />
-        </div>
-        <div>
-          <label htmlFor="app-to" className="mb-1 block text-sm font-medium text-slate-700">
-            Applied to
-          </label>
-          <input id="app-to" type="date" className={inputClass} value={query.to ?? ''} onChange={(e) => update({ to: e.target.value || undefined })} />
-        </div>
+      <section aria-label="Filters" className="grid gap-x-6 gap-y-5 rounded-lg border bg-card p-5 md:grid-cols-4">
+        <Field id="app-search" label="Search" className="md:col-span-2">
+          <div className="relative">
+            <SearchIcon aria-hidden="true" className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="app-search"
+              type="search"
+              className="pl-9"
+              placeholder="Company, role, notes, contacts"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </Field>
+        <Field id="app-from" label="Applied from">
+          <Input id="app-from" type="date" value={query.from ?? ''} onChange={(e) => update({ from: e.target.value || undefined })} />
+        </Field>
+        <Field id="app-to" label="Applied to">
+          <Input id="app-to" type="date" value={query.to ?? ''} onChange={(e) => update({ to: e.target.value || undefined })} />
+        </Field>
         {FILTER_GROUPS.map((g) => (
-          <fieldset key={g.key} className="md:col-span-1">
-            <legend className="mb-1 text-sm font-medium text-slate-700">{g.legend}</legend>
-            <div className="flex flex-wrap gap-x-3 gap-y-1">
+          <fieldset key={g.key} className="min-w-0">
+            <legend className="mb-2 text-sm font-medium">{g.legend}</legend>
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
               {g.options.map((o) => (
-                <label key={o} className="flex items-center gap-1 text-sm">
-                  <input type="checkbox" checked={(query[g.key] as string[] | undefined)?.includes(o) ?? false} onChange={() => toggle(g.key, o)} />
+                <label key={o} className="flex cursor-pointer items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="size-4 cursor-pointer rounded accent-primary"
+                    checked={(query[g.key] as string[] | undefined)?.includes(o) ?? false}
+                    onChange={() => toggle(g.key, o)}
+                  />
                   {g.labels[o]}
                 </label>
               ))}
             </div>
           </fieldset>
         ))}
-        <div>
-          <label htmlFor="app-sort" className="mb-1 block text-sm font-medium text-slate-700">
-            Sort by
-          </label>
-          <select id="app-sort" className={inputClass} value={query.sort} onChange={(e) => update({ sort: e.target.value as SortKey })}>
+        <Field id="app-sort" label="Sort by">
+          <NativeSelect id="app-sort" value={query.sort} onChange={(e) => update({ sort: e.target.value as SortKey })}>
             {(Object.keys(SORT_LABELS) as SortKey[]).map((s) => (
               <option key={s} value={s}>
                 {SORT_LABELS[s]}
               </option>
             ))}
-          </select>
-        </div>
-      </div>
+          </NativeSelect>
+        </Field>
+      </section>
 
-      {isPending && <p className="text-slate-600">Loading...</p>}
-      {isError && (
-        <p role="alert" className="rounded bg-red-50 px-3 py-2 text-sm text-red-800">
-          Could not load applications.
-        </p>
-      )}
+      {isPending && <PageStatus>Loading...</PageStatus>}
+      {isError && <PageStatus error>Could not load applications.</PageStatus>}
       {data && data.items.length === 0 && (
         <EmptyState
           title="No applications match these filters"
           action={
-            <button type="button" onClick={() => setParams(new URLSearchParams())} className="rounded border border-slate-300 px-3 py-1.5 text-sm">
+            <Button type="button" variant="outline" size="sm" onClick={() => setParams(new URLSearchParams())}>
               Clear filters
-            </button>
+            </Button>
           }
         />
       )}
       {data && data.items.length > 0 && (
         <>
-          <div className="overflow-x-auto rounded border border-slate-200 bg-white">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-slate-200 bg-slate-50 text-slate-600">
-                <tr>
-                  <th className="px-3 py-2">Company</th>
-                  <th className="px-3 py-2">Role</th>
-                  <th className="px-3 py-2">Status</th>
-                  <th className="px-3 py-2">Source</th>
-                  <th className="px-3 py-2">Date applied</th>
-                  <th className="px-3 py-2">Last change</th>
-                </tr>
-              </thead>
-              <tbody>
+          <div className="overflow-hidden rounded-lg border bg-card">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>Company</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Date applied</TableHead>
+                  <TableHead>Last change</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {data.items.map((a) => (
-                  <tr key={a.id} onClick={() => navigate(`/applications/${a.id}`)} className="cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                    <td className="px-3 py-2 font-medium">
-                      <Link to={`/applications/${a.id}`} onClick={(e) => e.stopPropagation()} className="text-blue-700 hover:underline">
+                  <TableRow key={a.id} onClick={() => navigate(`/applications/${a.id}`)} className="cursor-pointer">
+                    <TableCell className="font-medium">
+                      <Link
+                        to={`/applications/${a.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="underline-offset-4 hover:text-primary hover:underline"
+                      >
                         {a.company}
                       </Link>
-                    </td>
-                    <td className="px-3 py-2">{a.role}</td>
-                    <td className="px-3 py-2">
+                    </TableCell>
+                    <TableCell>{a.role}</TableCell>
+                    <TableCell>
                       <StatusBadge status={a.status} />
-                    </td>
-                    <td className="px-3 py-2">{SOURCE_LABELS[a.source]}</td>
-                    <td className="px-3 py-2">{formatDate(a.dateApplied)}</td>
-                    <td className="px-3 py-2">{formatDate(lastChangeDate(a))}</td>
-                  </tr>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{SOURCE_LABELS[a.source]}</TableCell>
+                    <TableCell className="text-muted-foreground tabular-nums">{formatDate(a.dateApplied)}</TableCell>
+                    <TableCell className="text-muted-foreground tabular-nums">{formatDate(lastChangeDate(a))}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
-          <nav aria-label="Pagination" className="flex items-center justify-between text-sm">
-            <span className="text-slate-600">
+          <nav aria-label="Pagination" className="flex flex-wrap items-center justify-between gap-3 text-sm">
+            <span className="text-muted-foreground">
               {data.total} application{data.total === 1 ? '' : 's'} - page {data.page} of {totalPages}
             </span>
             <span className="flex gap-2">
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 disabled={data.page <= 1}
                 onClick={() => setParams(toParams({ ...query, page: data.page - 1 }))}
-                className="rounded border border-slate-300 px-3 py-1.5 disabled:opacity-50"
               >
+                <ChevronLeftIcon aria-hidden="true" />
                 Previous
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 disabled={data.page >= totalPages}
                 onClick={() => setParams(toParams({ ...query, page: data.page + 1 }))}
-                className="rounded border border-slate-300 px-3 py-1.5 disabled:opacity-50"
               >
                 Next
-              </button>
+                <ChevronRightIcon aria-hidden="true" />
+              </Button>
             </span>
           </nav>
         </>

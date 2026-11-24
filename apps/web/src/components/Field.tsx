@@ -1,20 +1,17 @@
 import type { ReactNode } from 'react';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
-export const inputClass =
-  'block w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm focus:border-blue-600 focus:outline-none';
-
-type FieldProps = { id: string; label: string; error?: string; children: ReactNode };
+type FieldProps = { id: string; label: string; error?: string; className?: string; children: ReactNode };
 
 /** A labelled form control with its validation message rendered next to it. */
-export function Field({ id, label, error, children }: FieldProps) {
+export function Field({ id, label, error, className, children }: FieldProps) {
   return (
-    <div>
-      <label htmlFor={id} className="mb-1 block text-sm font-medium text-slate-700">
-        {label}
-      </label>
+    <div className={cn('grid gap-2', className)}>
+      <Label htmlFor={id}>{label}</Label>
       {children}
       {error && (
-        <p id={`${id}-error`} className="mt-1 text-sm text-red-700">
+        <p id={`${id}-error`} className="text-sm text-destructive">
           {error}
         </p>
       )}

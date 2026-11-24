@@ -8,6 +8,7 @@ import {
   sourceDonutOption,
   statusDonutOption,
 } from './charts';
+import { STATUS_COLORS } from '../lib/statusColors';
 
 type SeriesLike = { data: unknown[]; links?: unknown[] };
 const firstSeries = (o: unknown): SeriesLike => (o as { series: SeriesLike[] }).series[0]!;
@@ -45,6 +46,22 @@ describe('charts option builders', () => {
   it('uses human labels for statuses and sources', () => {
     expect(JSON.stringify(statusDonutOption([{ status: 'applied', count: 2 }]))).toContain('Applied');
     expect(JSON.stringify(sourceDonutOption([{ source: 'company_site', count: 1 }]))).toContain('Company site');
+  });
+
+  it('colours status donut items with the shared status palette', () => {
+    const s = firstSeries(statusDonutOption([{ status: 'interview', count: 2 }])) as {
+      data: { itemStyle?: { color?: string } }[];
+    };
+    expect(s.data[0]!.itemStyle?.color).toBe(STATUS_COLORS.interview.hex);
+  });
+
+  it('colours status sankey nodes with the shared status palette', () => {
+    const option = sankeyOption({
+      nodes: [{ name: 'applied' }, { name: 'offer' }],
+      links: [{ source: 'applied', target: 'offer', value: 1 }],
+    });
+    const s = firstSeries(option) as { data: { name: string; itemStyle?: { color?: string } }[] };
+    expect(s.data.find((n) => n.name === 'Offer')?.itemStyle?.color).toBe(STATUS_COLORS.offer.hex);
   });
 
   it('responseRateBySourceOption renders a null rate as 0 percent', () => {

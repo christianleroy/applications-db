@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { QueryCache, QueryClient } from '@tanstack/react-query';
+import { Loader2Icon, ServerOffIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { ClientError } from '../data/client';
 import { useClient } from '../data/ClientProvider';
 
@@ -102,23 +104,23 @@ export function BackendGate({
 
   if (state.kind === 'checking') {
     return (
-      <div role="status" className="flex min-h-screen items-center justify-center text-slate-600">
+      <div role="status" className="flex min-h-screen items-center justify-center gap-2 bg-page text-sm text-muted-foreground">
+        <Loader2Icon aria-hidden="true" className="size-4 animate-spin" />
         Connecting…
       </div>
     );
   }
 
   return (
-    <div role="alert" className="flex min-h-screen flex-col items-center justify-center gap-3 p-6 text-center">
-      <h1 className="text-xl font-semibold text-slate-900">Can't reach the backend</h1>
-      <p className="text-slate-700">{state.message}</p>
-      <button
-        type="button"
-        onClick={() => void check()}
-        className="rounded bg-blue-700 px-3 py-1.5 text-sm text-white hover:bg-blue-800"
-      >
-        Retry
-      </button>
+    <div role="alert" className="flex min-h-screen items-center justify-center bg-page p-4">
+      <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-lg border bg-card px-6 py-10 text-center">
+        <ServerOffIcon aria-hidden="true" className="size-8 text-primary" />
+        <h1 className="text-xl font-semibold tracking-tight">Can't reach the backend</h1>
+        <p className="text-sm break-words text-muted-foreground">{state.message}</p>
+        <Button type="button" onClick={() => void check()}>
+          Retry
+        </Button>
+      </div>
     </div>
   );
 }

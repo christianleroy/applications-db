@@ -4,6 +4,8 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // Resolves the `@/*` alias from tsconfig.json paths.
+  resolve: { tsconfigPaths: true },
   test: {
     environment: 'jsdom',
     globals: true,

@@ -1,8 +1,10 @@
+import { Card } from '@/components/ui/card';
+
 export function KpiTile({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded border border-slate-200 bg-white p-4">
-      <div className="text-sm text-slate-600">{label}</div>
-      <div className="mt-1 text-2xl font-semibold text-slate-900">{value}</div>
-    </div>
+    <Card className="gap-2 px-5">
+      <div className="text-sm text-muted-foreground">{label}</div>
+      <div className="text-3xl font-semibold tracking-tight tabular-nums">{value}</div>
+    </Card>
   );
 }

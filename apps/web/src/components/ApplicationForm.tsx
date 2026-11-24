@@ -1,4 +1,5 @@
 import { useId, useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
+import { PlusIcon } from 'lucide-react';
 import {
   SALARY_PERIODS,
   SOURCES,
@@ -14,7 +15,11 @@ import {
 } from '@applications-db/shared';
 import { useUpdateApplication } from '../data/hooks';
 import { SOURCE_LABELS, WORK_MODE_LABELS } from '../lib/labels';
-import { Field, errorProps, inputClass } from './Field';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Textarea } from '@/components/ui/textarea';
+import { Field, errorProps } from './Field';
 
 type Props = { initial: Application; onSaved: (app: Application) => void; onEdit?: () => void };
 
@@ -162,117 +167,124 @@ export function ApplicationForm({ initial, onSaved, onEdit }: Props) {
     setContacts((cs) => cs.map((c, i) => (i === index ? { ...c, [field]: value } : c)));
 
   return (
-    <form onSubmit={submit} noValidate className="space-y-4">
+    <form onSubmit={submit} noValidate className="space-y-8">
       {formError && (
-        <p role="alert" className="rounded bg-red-50 px-3 py-2 text-sm text-red-800">
+        <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
           {formError}
         </p>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
         <Field id={id('company')} label="Company" error={errors.company}>
-          <input id={id('company')} className={inputClass} value={company} onChange={(e) => setCompany(e.target.value)} {...errorProps(id('company'), errors.company)} />
+          <Input id={id('company')} value={company} onChange={(e) => setCompany(e.target.value)} {...errorProps(id('company'), errors.company)} />
         </Field>
         <Field id={id('role')} label="Role" error={errors.role}>
-          <input id={id('role')} className={inputClass} value={role} onChange={(e) => setRole(e.target.value)} {...errorProps(id('role'), errors.role)} />
+          <Input id={id('role')} value={role} onChange={(e) => setRole(e.target.value)} {...errorProps(id('role'), errors.role)} />
         </Field>
         <Field id={id('url')} label="Posting URL" error={errors.postingUrl}>
-          <input id={id('url')} className={inputClass} value={postingUrl} onChange={(e) => setPostingUrl(e.target.value)} {...errorProps(id('url'), errors.postingUrl)} />
+          <Input id={id('url')} value={postingUrl} onChange={(e) => setPostingUrl(e.target.value)} {...errorProps(id('url'), errors.postingUrl)} />
         </Field>
         <Field id={id('location')} label="Location" error={errors.location}>
-          <input id={id('location')} className={inputClass} value={location} onChange={(e) => setLocation(e.target.value)} {...errorProps(id('location'), errors.location)} />
+          <Input id={id('location')} value={location} onChange={(e) => setLocation(e.target.value)} {...errorProps(id('location'), errors.location)} />
         </Field>
         <Field id={id('workMode')} label="Work mode" error={errors.workMode}>
-          <select id={id('workMode')} className={inputClass} value={workMode} onChange={(e) => setWorkMode(e.target.value as WorkMode | '')}>
+          <NativeSelect id={id('workMode')} value={workMode} onChange={(e) => setWorkMode(e.target.value as WorkMode | '')}>
             <option value="">Not set</option>
             {WORK_MODES.map((m) => (
               <option key={m} value={m}>
                 {WORK_MODE_LABELS[m]}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </Field>
         <Field id={id('source')} label="Source" error={errors.source}>
-          <select id={id('source')} className={inputClass} value={source} onChange={(e) => setSource(e.target.value as Source)}>
+          <NativeSelect id={id('source')} value={source} onChange={(e) => setSource(e.target.value as Source)}>
             {SOURCES.map((s) => (
               <option key={s} value={s}>
                 {SOURCE_LABELS[s]}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </Field>
         <Field id={id('dateApplied')} label="Date applied" error={errors.dateApplied}>
-          <input id={id('dateApplied')} type="date" className={inputClass} value={dateApplied} onChange={(e) => setDateApplied(e.target.value)} {...errorProps(id('dateApplied'), errors.dateApplied)} />
+          <Input id={id('dateApplied')} type="date" value={dateApplied} onChange={(e) => setDateApplied(e.target.value)} {...errorProps(id('dateApplied'), errors.dateApplied)} />
         </Field>
         <Field id={id('followUp')} label="Follow-up date" error={errors.followUpDate}>
-          <input id={id('followUp')} type="date" className={inputClass} value={followUpDate} onChange={(e) => setFollowUpDate(e.target.value)} {...errorProps(id('followUp'), errors.followUpDate)} />
+          <Input id={id('followUp')} type="date" value={followUpDate} onChange={(e) => setFollowUpDate(e.target.value)} {...errorProps(id('followUp'), errors.followUpDate)} />
         </Field>
       </div>
 
-      <fieldset className="space-y-2">
-        <legend className="text-sm font-medium text-slate-700">Salary</legend>
-        <div className="grid gap-4 sm:grid-cols-4">
-          <Field id={id('salaryMin')} label="Salary min" error={errors['salary.min']}>
-            <input id={id('salaryMin')} type="number" min="0" className={inputClass} value={salaryMin} onChange={(e) => setSalaryMin(e.target.value)} {...errorProps(id('salaryMin'), errors['salary.min'])} />
-          </Field>
-          <Field id={id('salaryMax')} label="Salary max" error={errors['salary.max']}>
-            <input id={id('salaryMax')} type="number" min="0" className={inputClass} value={salaryMax} onChange={(e) => setSalaryMax(e.target.value)} {...errorProps(id('salaryMax'), errors['salary.max'])} />
-          </Field>
-          <Field id={id('currency')} label="Currency" error={errors['salary.currency'] && 'Use a 3-letter currency code'}>
-            <input id={id('currency')} maxLength={3} className={inputClass} value={currency} onChange={(e) => setCurrency(e.target.value)} {...errorProps(id('currency'), errors['salary.currency'])} />
-          </Field>
-          <Field id={id('period')} label="Period" error={errors['salary.period']}>
-            <select id={id('period')} className={inputClass} value={period} onChange={(e) => setPeriod(e.target.value as SalaryPeriod)}>
-              {SALARY_PERIODS.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
-        {errors.salary && <p className="text-sm text-red-700">{errors.salary}</p>}
-      </fieldset>
-
-      <fieldset className="space-y-3">
-        <legend className="text-sm font-medium text-slate-700">Contacts</legend>
-        {contacts.map((c, i) => (
-          <div key={i} className="grid gap-3 rounded border border-slate-200 p-3 sm:grid-cols-2">
-            {CONTACT_FIELDS.map((f) => {
-              const fieldId = id(`contact-${i}-${f}`);
-              const error = errors[`contacts.${i}.${f}`];
-              return (
-                <Field key={f} id={fieldId} label={`Contact ${i + 1} ${f}`} error={error}>
-                  <input id={fieldId} className={inputClass} value={c[f]} onChange={(e) => setContact(i, f, e.target.value)} {...errorProps(fieldId, error)} />
-                </Field>
-              );
-            })}
-            <div className="self-end">
-              <button
-                type="button"
-                aria-label={`Remove contact ${i + 1}`}
-                onClick={() => setContacts((cs) => cs.filter((_, j) => j !== i))}
-                className="rounded border border-slate-300 px-3 py-1.5 text-sm"
-              >
-                Remove
-              </button>
-            </div>
+      <div className="border-t pt-6">
+        <fieldset className="min-w-0 space-y-4">
+          <legend className="text-sm font-semibold">Salary</legend>
+          <div className="grid gap-x-6 gap-y-5 sm:grid-cols-4">
+            <Field id={id('salaryMin')} label="Salary min" error={errors['salary.min']}>
+              <Input id={id('salaryMin')} type="number" min="0" value={salaryMin} onChange={(e) => setSalaryMin(e.target.value)} {...errorProps(id('salaryMin'), errors['salary.min'])} />
+            </Field>
+            <Field id={id('salaryMax')} label="Salary max" error={errors['salary.max']}>
+              <Input id={id('salaryMax')} type="number" min="0" value={salaryMax} onChange={(e) => setSalaryMax(e.target.value)} {...errorProps(id('salaryMax'), errors['salary.max'])} />
+            </Field>
+            <Field id={id('currency')} label="Currency" error={errors['salary.currency'] && 'Use a 3-letter currency code'}>
+              <Input id={id('currency')} maxLength={3} value={currency} onChange={(e) => setCurrency(e.target.value)} {...errorProps(id('currency'), errors['salary.currency'])} />
+            </Field>
+            <Field id={id('period')} label="Period" error={errors['salary.period']}>
+              <NativeSelect id={id('period')} value={period} onChange={(e) => setPeriod(e.target.value as SalaryPeriod)}>
+                {SALARY_PERIODS.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </NativeSelect>
+            </Field>
           </div>
-        ))}
-        {errors.contacts && <p className="text-sm text-red-700">{errors.contacts}</p>}
-        <button type="button" onClick={() => setContacts((cs) => [...cs, blankContact()])} className="rounded border border-slate-300 px-3 py-1.5 text-sm">
-          Add contact
-        </button>
-      </fieldset>
+          {errors.salary && <p className="text-sm text-destructive">{errors.salary}</p>}
+        </fieldset>
+      </div>
 
-      <Field id={id('notes')} label="Notes" error={errors.notes}>
-        <textarea id={id('notes')} rows={4} className={inputClass} value={notes} onChange={(e) => setNotes(e.target.value)} />
+      <div className="border-t pt-6">
+        <fieldset className="min-w-0 space-y-4">
+          <legend className="text-sm font-semibold">Contacts</legend>
+          {contacts.map((c, i) => (
+            <div key={i} className="grid gap-x-6 gap-y-4 rounded-md border bg-muted/30 p-4 sm:grid-cols-2">
+              {CONTACT_FIELDS.map((f) => {
+                const fieldId = id(`contact-${i}-${f}`);
+                const error = errors[`contacts.${i}.${f}`];
+                return (
+                  <Field key={f} id={fieldId} label={`Contact ${i + 1} ${f}`} error={error}>
+                    <Input id={fieldId} value={c[f]} onChange={(e) => setContact(i, f, e.target.value)} {...errorProps(fieldId, error)} />
+                  </Field>
+                );
+              })}
+              <div className="flex items-end justify-end">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  aria-label={`Remove contact ${i + 1}`}
+                  onClick={() => setContacts((cs) => cs.filter((_, j) => j !== i))}
+                  className="text-destructive hover:bg-destructive/5 hover:text-destructive"
+                >
+                  Remove
+                </Button>
+              </div>
+            </div>
+          ))}
+          {errors.contacts && <p className="text-sm text-destructive">{errors.contacts}</p>}
+          <Button type="button" variant="outline" size="sm" onClick={() => setContacts((cs) => [...cs, blankContact()])}>
+            <PlusIcon aria-hidden="true" />
+            Add contact
+          </Button>
+        </fieldset>
+      </div>
+
+      <Field id={id('notes')} label="Notes" error={errors.notes} className="border-t pt-6">
+        <Textarea id={id('notes')} rows={4} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </Field>
 
       <div className="flex justify-end">
-        <button type="submit" disabled={update.isPending} className="rounded bg-blue-700 px-4 py-1.5 text-sm text-white disabled:opacity-60">
+        <Button type="submit" disabled={update.isPending}>
           Save
-        </button>
+        </Button>
       </div>
     </form>
   );

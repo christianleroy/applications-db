@@ -2,20 +2,27 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { todayIso, type Application } from '@applications-db/shared';
 import { KpiTile } from '../components/KpiTile';
+import { PageHeader, PageStatus } from '../components/PageHeader';
 import { StatusBadge } from '../components/StatusBadge';
+import { Button } from '@/components/ui/button';
 import { useAddStatus, useDashboard } from '../data/hooks';
 import { formatDate, formatPercent } from '../lib/format';
 
 function Section({ title, empty, isEmpty, children }: { title: string; empty: string; isEmpty: boolean; children: ReactNode }) {
   return (
-    <section className="rounded border border-slate-200 bg-white p-4">
-      <h2 className="mb-2 font-semibold text-slate-900">{title}</h2>
-      {isEmpty ? <p className="text-sm text-slate-600">{empty}</p> : <ul className="divide-y divide-slate-100">{children}</ul>}
+    <section className="flex flex-col rounded-lg border bg-card">
+      <h2 className="px-5 pt-4 pb-3 text-sm font-semibold">{title}</h2>
+      {isEmpty ? (
+        <p className="border-t px-5 py-4 text-sm text-muted-foreground">{empty}</p>
+      ) : (
+        <ul className="divide-y border-t">{children}</ul>
+      )}
     </section>
   );
 }
 
-const linkClass = 'text-blue-700 hover:underline';
+const linkClass = 'min-w-0 truncate font-medium underline-offset-4 hover:text-primary hover:underline';
+const itemClass = 'flex min-h-12 items-center justify-between gap-3 px-5 py-2 text-sm';
 
 function AppLink({ app }: { app: Application }) {
   return (
@@ -29,12 +36,12 @@ export function DashboardPage() {
   const { data, isPending, isError } = useDashboard();
   const addStatus = useAddStatus();
 
-  if (isPending) return <p className="text-slate-600">Loading...</p>;
-  if (isError) return <p role="alert" className="text-red-700">Could not load the dashboard.</p>;
+  if (isPending) return <PageStatus>Loading...</PageStatus>;
+  if (isError) return <PageStatus error>Could not load the dashboard.</PageStatus>;
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-xl font-semibold">Dashboard</h1>
+    <div className="space-y-8">
+      <PageHeader title="Dashboard" />
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <KpiTile label="Active" value={data.activeCount} />
         <KpiTile label="In interview" value={data.interviewCount} />
@@ -44,35 +51,36 @@ export function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2">
         <Section title="Follow-ups due" empty="No follow-ups due" isEmpty={data.followUpsDue.length === 0}>
           {data.followUpsDue.map((a) => (
-            <li key={a.id} className="flex items-center justify-between gap-2 py-2">
+            <li key={a.id} className={itemClass}>
               <AppLink app={a} />
-              <span className="text-sm text-slate-600">{a.followUpDate ? formatDate(a.followUpDate) : ''}</span>
+              <span className="shrink-0 text-muted-foreground tabular-nums">{a.followUpDate ? formatDate(a.followUpDate) : ''}</span>
             </li>
           ))}
         </Section>
         <Section title="Stale (21+ days without change)" empty="Nothing stale" isEmpty={data.stale.length === 0}>
           {data.stale.map((a) => (
-            <li key={a.id} className="flex items-center justify-between gap-2 py-2">
+            <li key={a.id} className={itemClass}>
               <AppLink app={a} />
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 disabled={addStatus.isPending}
                 onClick={() => addStatus.mutate({ id: a.id, input: { status: 'ghosted', date: todayIso() } })}
-                className="rounded border border-slate-300 px-2 py-1 text-sm hover:bg-slate-50 disabled:opacity-50"
               >
                 Mark ghosted
-              </button>
+              </Button>
             </li>
           ))}
         </Section>
       </div>
       <Section title="Recent activity" empty="No recent activity" isEmpty={data.recentActivity.length === 0}>
         {data.recentActivity.map((item) => (
-          <li key={item.entry.id} className="flex items-center justify-between gap-2 py-2">
+          <li key={item.entry.id} className={itemClass}>
             <Link to={`/applications/${item.applicationId}`} className={linkClass}>
               {item.company} - {item.role}
             </Link>
-            <span className="flex items-center gap-2 text-sm text-slate-600">
+            <span className="flex shrink-0 items-center gap-3 text-muted-foreground tabular-nums">
               <StatusBadge status={item.entry.status} />
               {formatDate(item.entry.date)}
             </span>

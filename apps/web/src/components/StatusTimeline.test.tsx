@@ -92,8 +92,23 @@ describe('StatusTimeline', () => {
     await user.click(within(second).getByRole('button', { name: 'Save' }));
     await waitForBadge('Rejected');
     await user.click(within(screen.getAllByRole('listitem')[1]!).getByRole('button', { name: /delete/i }));
+    await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Delete' }));
     await waitForItems(1);
     expect(screen.getByTestId('badge')).toHaveTextContent('Applied');
+  });
+
+  it('asks for confirmation before deleting an entry, and Escape cancels it', async () => {
+    const user = userEvent.setup();
+    const client = setup();
+    await screen.findByRole('list');
+    await user.click(screen.getByRole('button', { name: 'Add status' }));
+    await waitForItems(2);
+    await user.click(within(screen.getAllByRole('listitem')[1]!).getByRole('button', { name: /delete/i }));
+    expect(await screen.findByRole('alertdialog', { name: 'Delete status entry' })).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+    expect((await client.get(app.id)).statusHistory).toHaveLength(2);
   });
 });
 

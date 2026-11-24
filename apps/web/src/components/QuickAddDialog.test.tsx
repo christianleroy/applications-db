@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { todayIso } from '@applications-db/shared';
@@ -65,6 +66,40 @@ describe('QuickAddDialog', () => {
     await waitFor(() =>
       expect(screen.getByTestId('where')).toHaveTextContent(`/applications/${page.items[0]!.id}`),
     );
+  });
+
+  it('closes on Escape and returns focus to the "Add application" trigger', async () => {
+    const user = userEvent.setup();
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+    function Harness() {
+      const [open, setOpen] = useState(false);
+      return (
+        <QuickAddDialog
+          open={open}
+          onClose={() => setOpen(false)}
+          trigger={
+            <button type="button" onClick={() => setOpen(true)}>
+              Add application
+            </button>
+          }
+        />
+      );
+    }
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ClientProvider client={new MemoryClient([])}>
+          <MemoryRouter>
+            <Harness />
+          </MemoryRouter>
+        </ClientProvider>
+      </QueryClientProvider>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Add application' });
+    await user.click(trigger);
+    expect(await screen.findByRole('dialog', { name: 'Add application' })).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(trigger).toHaveFocus();
   });
 
   it('closes on Escape', async () => {
