@@ -27,6 +27,8 @@
   "dependencies": {
     "@applications-db/shared": "*",
     "@tanstack/react-query": "^5.108.3",
+    "echarts": "^6.1.0",
+    "echarts-for-react": "^3.1.0",
     "lucide-react": "^1.78.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
