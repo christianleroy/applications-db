@@ -117,8 +117,8 @@ export function ApplicationsPage() {
     <div className="space-y-6">
       <PageHeader title="Applications" />
 
-      <section aria-label="Filters" className="grid gap-x-6 gap-y-5 rounded-lg border bg-card p-5 md:grid-cols-4">
-        <Field id="app-search" label="Search" className="md:col-span-2">
+      <section aria-label="Filters" className="grid gap-x-6 gap-y-5 rounded-lg border bg-card p-5 sm:grid-cols-2 xl:grid-cols-4">
+        <Field id="app-search" label="Search" className="sm:col-span-2">
           <div className="relative">
             <SearchIcon aria-hidden="true" className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -140,9 +140,9 @@ export function ApplicationsPage() {
         {FILTER_GROUPS.map((g) => (
           <fieldset key={g.key} className="min-w-0">
             <legend className="mb-2 text-sm leading-none font-medium">{g.legend}</legend>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+            <div className="grid grid-cols-[repeat(2,max-content)] gap-x-6 gap-y-1.5">
               {g.options.map((o) => (
-                <label key={o} className="flex cursor-pointer items-center gap-2 text-sm">
+                <label key={o} className="flex cursor-pointer items-center gap-2 text-sm whitespace-nowrap">
                   <input
                     type="checkbox"
                     className="size-4 shrink-0 cursor-pointer rounded accent-primary"
