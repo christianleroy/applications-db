@@ -632,6 +632,13 @@ expect(formatPercent(0.5)).toBe('50%');
 
 The API must serve exactly the routes listed in Task 9's `ApiClient`, use `{ code, message, issues? }` error bodies with the status codes listed under `ClientError`, and compute everything with the shared functions (`filterApplications`, history ops, `computeDashboard`, `computeReport`). `GET /dashboard?today=` is an addition to the spec's route list: the dashboard needs follow-ups/stale/recent activity, which `/stats` doesn't carry, and "today" must be the user's local date, so the client sends it.
 
+Response and error details to fix at the start of Phase 2:
+- `DELETE /applications/:id` -> 204 with no body.
+- `DELETE /applications/:id/status/:entryId` -> 200 with the updated Application JSON.
+- An unknown application id or unknown status-entry id -> 404. MemoryClient currently maps `ENTRY_NOT_FOUND` to 409; align the two (change MemoryClient to 404 or document otherwise) before the API lands.
+- The API must parse query strings with coercion (`page`/`pageSize` as numbers via `z.coerce`, a single `status=x` value accepted as an array) rather than reusing the browser-side schema as-is.
+- `ApiClient` should wrap a 2xx non-JSON body as `ClientError(status, 'BAD_RESPONSE')` instead of letting a raw `SyntaxError` escape; a misconfigured proxy returning `index.html` is the likely first failure.
+
 ---
 
 ## Execution status (resumed 2026-11-24)
