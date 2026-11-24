@@ -1,7 +1,5 @@
 @media print {
-  [data-print-hide],
-  header,
-  footer {
+  [data-print-hide] {
     display: none !important;
   }
 

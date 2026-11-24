@@ -16,4 +16,14 @@ describe('Layout', () => {
     expect(hrefs).toEqual(['/', '/applications', '/statistics', '/reports']);
     expect(screen.getByText('Data source: In-memory (sample data, resets on reload)')).toBeInTheDocument();
   });
+
+  it('marks header and footer to be hidden when printing', () => {
+    render(
+      <MemoryRouter>
+        <Layout />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('banner')).toHaveAttribute('data-print-hide');
+    expect(screen.getByRole('contentinfo')).toHaveAttribute('data-print-hide');
+  });
 });

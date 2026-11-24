@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -9,7 +10,13 @@ import { MemoryClient } from '../data/memoryClient';
 import { ReportsPage } from './ReportsPage';
 
 vi.mock('../components/EChart', () => ({
-  EChart: ({ ariaLabel }: { ariaLabel: string }) => <div data-testid="chart">{ariaLabel}</div>,
+  EChart: ({ ariaLabel, onReady }: { ariaLabel: string; onReady?: (i: unknown) => void }) => {
+    // Fake instance whose export always fails (zero size).
+    useEffect(() => {
+      onReady?.({ getDataURL: () => 'data:image/svg+xml;charset=UTF-8,x', getWidth: () => 0, getHeight: () => 0 });
+    }, [onReady]);
+    return <div data-testid="chart">{ariaLabel}</div>;
+  },
 }));
 
 function setup(daysAgo: number[], url = '/reports') {
@@ -63,5 +70,13 @@ describe('ReportsPage', () => {
     setup([1]);
     await userEvent.click(await screen.findByRole('button', { name: 'Print / Save as PDF' }));
     expect(print).toHaveBeenCalledOnce();
+  });
+
+  it('shows an alert when exporting a chart fails', async () => {
+    setup([1]);
+    expect(screen.queryByRole('alert')).toBeNull();
+    const [first] = await screen.findAllByRole('button', { name: /Download PNG/ });
+    await userEvent.click(first!);
+    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't export the chart image.");
   });
 });
