@@ -1,4 +1,4 @@
-import { useId, useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
+import { useId, useRef, useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
 import { PlusIcon } from 'lucide-react';
 import {
   SALARY_PERIODS,
@@ -14,6 +14,7 @@ import {
   type WorkMode,
 } from '@applications-db/shared';
 import { useUpdateApplication } from '../data/hooks';
+import { errorMessage } from '../lib/errors';
 import { SOURCE_LABELS, WORK_MODE_LABELS } from '../lib/labels';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -66,6 +67,8 @@ function issueKey(path: PropertyKey[]): string {
  */
 function useDraft<T>(source: T, onEdit?: () => void): [T, Dispatch<SetStateAction<T>>] {
   const [state, setState] = useState({ value: source, touched: false });
+  const sourceRef = useRef(source);
+  sourceRef.current = source;
   const key = JSON.stringify(source);
   const [prevKey, setPrevKey] = useState(key);
   if (key !== prevKey) {
@@ -75,7 +78,11 @@ function useDraft<T>(source: T, onEdit?: () => void): [T, Dispatch<SetStateActio
   return [
     state.value,
     (next) => {
-      setState((s) => ({ value: typeof next === 'function' ? (next as (prev: T) => T)(s.value) : next, touched: true }));
+      setState((s) => {
+        const value = typeof next === 'function' ? (next as (prev: T) => T)(s.value) : next;
+        // Editing back to the source value is not an edit: the draft keeps following the source.
+        return { value, touched: JSON.stringify(value) !== JSON.stringify(sourceRef.current) };
+      });
       onEdit?.();
     },
   ];
@@ -159,7 +166,7 @@ export function ApplicationForm({ initial, onSaved, onEdit }: Props) {
     try {
       onSaved(await update.mutateAsync({ id: initial.id, patch: parsed.data }));
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Could not save the application');
+      setFormError(errorMessage(err, 'Could not save the application'));
     }
   }
 

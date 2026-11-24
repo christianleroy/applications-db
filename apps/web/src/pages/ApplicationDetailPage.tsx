@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ClientError } from '../data/client';
 import { useApplication, useDeleteApplication } from '../data/hooks';
+import { errorMessage } from '../lib/errors';
 
 const isHttpUrl = (url: string) => url.startsWith('http://') || url.startsWith('https://');
 
@@ -72,6 +73,11 @@ function ConfirmDelete({ company, busy, error, onConfirm, onCancel, trigger, ope
 
 export function ApplicationDetailPage() {
   const { id = '' } = useParams();
+  // Keyed on the id so per-application UI state (Saved banner, delete dialog) never carries over.
+  return <ApplicationDetail key={id} id={id} />;
+}
+
+function ApplicationDetail({ id }: { id: string }) {
   const navigate = useNavigate();
   const { data: app, error, isPending } = useApplication(id);
   const remove = useDeleteApplication();
@@ -96,7 +102,7 @@ export function ApplicationDetailPage() {
       await remove.mutateAsync(id);
       navigate('/applications');
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : 'Could not delete the application');
+      setDeleteError(errorMessage(err, 'Could not delete the application'));
     }
   }
 

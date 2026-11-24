@@ -110,6 +110,16 @@ describe('StatusTimeline', () => {
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
     expect((await client.get(app.id)).statusHistory).toHaveLength(2);
   });
+
+  it('does not let the first entry change status when editing, but date and note stay editable', async () => {
+    const user = userEvent.setup();
+    setup();
+    const first = (await screen.findAllByRole('listitem'))[0]!;
+    await user.click(within(first).getByRole('button', { name: /edit/i }));
+    expect(within(first).getByLabelText('Status')).toBeDisabled();
+    expect(within(first).getByLabelText('Date')).toBeEnabled();
+    expect(within(first).getByLabelText('Note')).toBeEnabled();
+  });
 });
 
 const waitForItems = (n: number) => waitFor(() => expect(screen.getAllByRole('listitem')).toHaveLength(n));

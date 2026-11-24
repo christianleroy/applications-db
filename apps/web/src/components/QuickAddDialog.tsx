@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { CreateApplicationInputSchema, SOURCES, todayIso, type Source } from '@applications-db/shared';
 import { useCreateApplication } from '../data/hooks';
 import { SOURCE_LABELS } from '../lib/labels';
+import { errorMessage } from '../lib/errors';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -67,7 +68,7 @@ function QuickAddForm({ onClose }: { onClose: () => void }) {
       onClose();
       navigate(`/applications/${created.id}`);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Could not save the application');
+      setFormError(errorMessage(err, 'Could not save the application'));
     }
   }
 

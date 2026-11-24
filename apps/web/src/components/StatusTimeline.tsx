@@ -1,7 +1,8 @@
 import { useId, useState, type FormEvent } from 'react';
 import { PROGRESS_STAGES, STATUSES, todayIso, type Application, type Status, type StatusEntry } from '@applications-db/shared';
 import { useAddStatus, useRemoveStatus, useUpdateStatus } from '../data/hooks';
-import { DOMAIN_ERROR_MESSAGES, STATUS_LABELS, isDomainErrorCode } from '../lib/labels';
+import { errorMessage } from '../lib/errors';
+import { STATUS_LABELS } from '../lib/labels';
 import { formatDate } from '../lib/format';
 import { STATUS_COLORS } from '../lib/statusColors';
 import {
@@ -21,13 +22,6 @@ import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Field } from './Field';
 
-function errorMessage(err: unknown): string {
-  if (err && typeof err === 'object' && 'code' in err && typeof err.code === 'string' && isDomainErrorCode(err.code)) {
-    return DOMAIN_ERROR_MESSAGES[err.code];
-  }
-  return err instanceof Error ? err.message : 'Something went wrong';
-}
-
 function nextStage(current: Status): Status {
   const i = (PROGRESS_STAGES as readonly Status[]).indexOf(current);
   return i >= 0 && i < PROGRESS_STAGES.length - 1 ? PROGRESS_STAGES[i + 1]! : 'rejected';
@@ -35,6 +29,7 @@ function nextStage(current: Status): Status {
 
 type FieldsProps = {
   uid: string;
+  statusLocked?: boolean;
   status: Status;
   date: string;
   note: string;
@@ -44,11 +39,11 @@ type FieldsProps = {
 };
 
 /** The status / date / note controls shared by the add and edit forms. */
-function EntryFields({ uid, status, date, note, onStatus, onDate, onNote }: FieldsProps) {
+function EntryFields({ uid, statusLocked, status, date, note, onStatus, onDate, onNote }: FieldsProps) {
   return (
     <>
       <Field id={`${uid}-status`} label="Status">
-        <NativeSelect id={`${uid}-status`} value={status} onChange={(e) => onStatus(e.target.value as Status)}>
+        <NativeSelect id={`${uid}-status`} value={status} disabled={statusLocked} onChange={(e) => onStatus(e.target.value as Status)}>
           {STATUSES.map((s) => (
             <option key={s} value={s}>
               {STATUS_LABELS[s]}
@@ -106,7 +101,7 @@ function TimelineEntry({ applicationId, entry, deletable, onChanged }: EntryProp
     <li className="px-5 py-3">
       {editing ? (
         <form onSubmit={save} className="grid gap-3 sm:grid-cols-4">
-          <EntryFields uid={uid} status={status} date={date} note={note} onStatus={setStatus} onDate={setDate} onNote={setNote} />
+          <EntryFields uid={uid} statusLocked={!deletable} status={status} date={date} note={note} onStatus={setStatus} onDate={setDate} onNote={setNote} />
           <div className="flex items-end gap-2">
             <Button type="submit" size="sm" disabled={update.isPending}>
               Save
