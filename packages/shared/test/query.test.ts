@@ -43,6 +43,16 @@ describe('filterApplications', () => {
     expect(filterApplications(apps, q({ q: 'jo rec' })).items).toEqual([apps[0]]);
   });
 
+  it('matches a contact role, phone and notes', () => {
+    const apps = [
+      make({ contacts: [{ name: 'Jo', role: 'Hiring Manager', phone: '555-0142', notes: 'prefers mornings' }] }),
+      make({ company: 'Other' }),
+    ];
+    expect(filterApplications(apps, q({ q: 'hiring manager' })).items).toEqual([apps[0]]);
+    expect(filterApplications(apps, q({ q: '555-0142' })).items).toEqual([apps[0]]);
+    expect(filterApplications(apps, q({ q: 'MORNINGS' })).items).toEqual([apps[0]]);
+  });
+
   it('ORs within a field and ANDs across fields', () => {
     const apps = [
       make({ source: 'referral', status: 'interview' }),

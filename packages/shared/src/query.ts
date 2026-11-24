@@ -8,7 +8,7 @@ const searchableText = (a: Application): string[] => [
   a.role,
   a.notes ?? '',
   a.location ?? '',
-  ...a.contacts.flatMap((c) => [c.name, c.email ?? '']),
+  ...a.contacts.flatMap((c) => [c.name, c.role ?? '', c.email ?? '', c.phone ?? '', c.notes ?? '']),
 ];
 
 const byId = (a: Application, b: Application): number => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
