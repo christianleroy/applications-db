@@ -16,6 +16,7 @@ Personal job-application tracker: an npm-workspaces monorepo with a React web ap
 - `npm test` - run tests in every workspace
 - `npm run typecheck` - type-check every workspace
 - `npm run dev` - start the web app dev server
+- `npm run e2e` - Playwright smoke test (builds + serves the web app in memory mode; needs `npx playwright install chromium` once)
 - `docker compose up --build` - run the full stack (web on port 8080)
 
 ## House rules
