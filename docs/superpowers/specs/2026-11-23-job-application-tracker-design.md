@@ -21,7 +21,7 @@ Why: the owner is experimenting with agentic AI coding, but the result must be *
 **Non-goals**
 - Login, accounts, multi-user, permissions.
 - Cloud hosting, sync between devices.
-- Backups, data export/import, moving data between storage kinds.
+- Backups, moving data between storage kinds. (Data export/import was a non-goal; reversed 2026-11-24, see §11 Phase 2.)
 - Choosing or switching storage from inside the app.
 - Email/calendar integration, job-board scraping, company-logo lookups, AI features.
 - Mobile app (responsive web is enough).
@@ -172,8 +172,9 @@ All filtered by `dateApplied` within the selected range. Library: **Apache EChar
 
 ## 11. Phases
 
-1. **Shared + frontend** — `packages/shared`, all screens, in-memory data layer with seed data, config module, `web` container, Compose running `web` in memory mode.
+1. **Shared + frontend** — `packages/shared`, all screens, in-memory data layer with seed data, config module, `web` container, Compose running `web` in memory mode. Includes a visual restyle (shadcn/ui, maroon theme): see `2026-11-24-restyle-design.md`.
 2. **Backend** — Fastify API with both storage drivers, config + fail-fast startup, `api` and `mongo` containers, frontend `api` data layer and health check, full-stack Compose default.
+   - **Data export/import (added 2026-11-24, owner request):** available only when running on MongoDB (not in memory mode). Export = one JSON file with every application and its full status history plus a format version; import accepts exactly that format, validated with the shared Zod schemas before anything is written. Open, decide at Phase 2 planning: import replaces all data or merges (add new, skip existing ids).
 3. **Polish** — loose ends, README (setup, configuration, volume warning).
 
 ## 12. Left to the builder

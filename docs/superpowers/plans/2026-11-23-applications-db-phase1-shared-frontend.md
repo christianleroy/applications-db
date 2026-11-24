@@ -569,7 +569,42 @@ expect(formatPercent(0.5)).toBe('50%');
 
 ---
 
-### Task 15: Container, Compose, and end-to-end smoke test
+### Task 15: Restyle with shadcn/ui (maroon theme)
+
+**Spec:** `docs/superpowers/specs/2026-11-24-restyle-design.md` (approved 2026-11-24). Purely visual, plus dialog accessibility; no behaviour changes.
+
+**Files:**
+- Create: `apps/web/components.json` (shadcn config), `apps/web/src/lib/utils.ts` (`cn`), `apps/web/src/components/ui/{button,card,input,label,textarea,badge,table,dialog,alert-dialog}.tsx` (+ native-select styling: shadcn `native-select` if the registry has it, else a `selectClassName` export in `ui/input.tsx`)
+- Create: `apps/web/src/lib/statusColors.ts`, `apps/web/src/lib/statusColors.test.ts`
+- Modify: `apps/web/src/index.css` (theme tokens), `apps/web/tsconfig.json` + `apps/web/vite.config.ts` (`@/*` → `src/*` alias), `apps/web/package.json`
+- Modify (restyle only): `Layout`, `QuickAddDialog`, `ApplicationForm`, `Field`, `StatusBadge`, `StatusTimeline`, `EmptyState`, `KpiTile`, `DateRangePicker`, `ReportCharts`, `charts.ts`, and every page in `src/pages/`
+- Test: `statusColors.test.ts`, `charts.test.ts`, `QuickAddDialog.test.tsx`, `StatusTimeline.test.tsx`, `ApplicationDetailPage.test.tsx`; other tests change only where markup changed
+
+**Interfaces:**
+- Consumes: everything from Tasks 8–14 unchanged (props, hooks, routes, accessible names/labels).
+- Produces:
+  - Theme tokens in `index.css` (shadcn variable names): `--primary` maroon `#7B1E2E`, `--primary-foreground` white, primary hover `#5E1622`, `--foreground` `#111111`, `--background` white, borders/muted greys, `--radius` `0.375rem`. No shadows (`shadow-none`), no gradients. Font stays the existing system stack.
+  - `lib/statusColors.ts`: `STATUS_COLORS: Record<Status, { hex: string; badgeClass: string }>`, muted, per spec: applied slate, screening sky, interview amber, offer emerald, accepted green, rejected rose, ghosted stone, withdrawn zinc. `SOURCE_COLORS: Record<Source, string>` (hex, muted categorical, none maroon).
+  - `StatusBadge` uses `STATUS_COLORS[s].badgeClass` (via `ui/badge`); `charts.ts` uses `STATUS_COLORS[s].hex` for status donut items and status Sankey nodes, `SOURCE_COLORS` for source donut and response-rate-by-source bars; the `no_response` Sankey node is neutral grey. Sankey link `color: 'gradient'` stays (link colours come from node colours).
+  - Layout: maroon header bar (`bg-primary`), white app name and nav links, active link underlined; "Add application" is a white button with maroon text. Content on white cards with 1px border.
+  - Quick-add uses `ui/dialog`; every delete/remove confirmation uses `ui/alert-dialog`.
+- Setup: `npx shadcn@latest init` / `add` run from `apps/web` (setup-time download into the npm cache only; nothing global), or copy component source by hand. Commit generated files and `package-lock.json`.
+
+- [ ] **Step 1: Write the failing tests**
+  - `statusColors.test.ts`: every status in `STATUSES` has an entry; the 8 `hex` values are distinct; none equals `#7B1E2E`; every source in `SOURCES` has a `SOURCE_COLORS` entry.
+  - `charts.test.ts`: `statusDonutOption([{status:'interview',count:2}])` → that datum's `itemStyle.color === STATUS_COLORS.interview.hex`; `sankeyOption` gives node `offer` `itemStyle.color === STATUS_COLORS.offer.hex`.
+  - `QuickAddDialog.test.tsx`: open via "Add application", press Escape → dialog gone and focus is on the "Add application" button.
+  - `StatusTimeline.test.tsx` / `ApplicationDetailPage.test.tsx`: the remove/delete confirmation has role `alertdialog`; Escape cancels it and nothing is removed.
+- [ ] **Step 2: Run** `npm test -w apps/web -- statusColors charts QuickAdd StatusTimeline ApplicationDetail`. Expected: FAIL.
+- [ ] **Step 3: Implement.** Add shadcn setup and components, tokens, `statusColors.ts`; swap dialogs; restyle each component and page with the `ui/*` primitives. Keep every existing label, button name and role so behaviour tests still find them. Selects stay native `<select>`.
+- [ ] **Step 4: Run** `npm test && npm run typecheck`. Expected: all PASS, output free of warnings (Radix `DialogContent` requires a `DialogTitle`/`Description`; provide them).
+- [ ] **Step 5: Verify offline:** `npm run build -w apps/web`, then search `apps/web/dist` for `http://` / `https://` outside license comments. Expected: no external asset URLs.
+- [ ] **Step 6: Visual check:** `npm run dev`; the controller opens it in the browser pane and checks each route (Dashboard, Applications, Detail, Statistics, Reports, quick-add) at desktop and 375px widths.
+- [ ] **Step 7: Commit:** `feat(web): restyle with shadcn/ui maroon theme`
+
+---
+
+### Task 16: Container, Compose, and end-to-end smoke test
 
 **Files:**
 - Create: `apps/web/Dockerfile`, `apps/web/nginx.conf`, `.dockerignore`, `docker-compose.yml`
@@ -599,7 +634,7 @@ The API must serve exactly the routes listed in Task 9's `ApiClient`, use `{ cod
 
 ---
 
-## Execution status (paused 2026-11-23)
+## Execution status (resumed 2026-11-24)
 
 Executed with superpowers:subagent-driven-development on branch `phase1-frontend` (local; not pushed, not merged). Each task: fresh implementer → task review (spec + quality) → fix rounds until clean.
 
@@ -616,10 +651,11 @@ Executed with superpowers:subagent-driven-development on branch `phase1-frontend
 | 9 Data layer | ✅ done | 1e744fc |
 | 10 Quick-add + form | ✅ done | 83126c3, 997a32a |
 | 11 Search + detail pages | ✅ done | c0bf2dc, a92d131 |
-| 12 Dashboard + Statistics | ⏳ next | |
-| 13 Reports | pending | |
-| 14 Backend gate | pending | |
-| 15 Container, Compose, e2e | pending — **needs owner approval first** for host changes: Playwright Chromium download (`%LOCALAPPDATA%\ms-playwright`), Docker image pulls (`node:22-alpine`, `nginx:alpine`), image/container/network creation | |
+| 12 Dashboard + Statistics | ✅ done | 68e15fb |
+| 13 Reports | ✅ done (review pending at time of writing) | 1b615a6 |
+| 14 Backend gate | ⏳ next | |
+| 15 Restyle with shadcn/ui (added 2026-11-24) | pending | |
+| 16 Container, Compose, e2e | pending — **needs owner approval first** for host changes: Playwright Chromium download (`%LOCALAPPDATA%\ms-playwright`), Docker image pulls (`node:22-alpine`, `nginx:alpine`), image/container/network creation | |
 | Final whole-branch review | pending (most capable model; triage the deferred minors below) | |
 
 **To resume:** check out `phase1-frontend`, run `npm install`, `npm test`, `npm run typecheck` (expect all green), then continue subagent-driven development at Task 12. Owner rules in `CLAUDE.md` apply (no push / no host changes without approval).
